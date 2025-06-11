@@ -5,7 +5,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QGridLayout>
+#include <QGridLayout> // Keep for now, might remove if QHBoxLayout is sufficient
+#include <QHBoxLayout> // For columns
 
 class StartPageView : public QWidget
 {
@@ -17,21 +18,44 @@ public:
 
 signals:
     void backClicked();
-    void gameModeSelected(const QString &mode); // Signal to indicate a game mode was chosen
+    void gameModeSelected(const QString &mode);
 
 private:
     QLabel *titleLabel;
-    QPushButton *classicButton;
-    QPushButton *europeanButton;
-    QPushButton *crossButton;
-    QPushButton *starButton;
-    QPushButton *endgameButton;
-    // Add more buttons for other modes if needed
+
+    // Main layout for columns
+    QHBoxLayout *columnsLayout;
+
+    // Column 1: Classic Mode
+    QVBoxLayout *classicModeLayout;
+    QLabel *classicModeLabel;
+    QPushButton *classicEnglishButton;
+    QPushButton *classicEuropeanButton;
+    QPushButton *classicCrossButton;
+    QPushButton *classicStarButton;
+
+    // Column 2: Special Game Mode
+    QVBoxLayout *specialModeLayout;
+    QLabel *specialModeLabel;
+    QPushButton *specialAntiPegButton;
+    QPushButton *specialDestinationButton;
+    QPushButton *specialEndgameButton;
+
+    // Column 3: Peg Duo Mode
+    QVBoxLayout *pegDuoModeLayout; // Changed from creativeModeLayout
+    QLabel *pegDuoModeLabel;       // Changed from creativeModeLabel
+    QPushButton *pegDuoButton;
 
     QPushButton *backButton;
+    QVBoxLayout *mainLayout; // Overall vertical layout
 
-    QVBoxLayout *mainLayout;
-    QGridLayout *gridLayout; // For game mode buttons
+    // Remove old individual buttons and gridLayout if no longer directly used
+    // QPushButton *classicButton;
+    // QPushButton *europeanButton;
+    // QPushButton *crossButton;
+    // QPushButton *starButton;
+    // QPushButton *endgameButton;
+    // QGridLayout *gridLayout;
 };
 
 #endif // STARTPAGEVIEW_H

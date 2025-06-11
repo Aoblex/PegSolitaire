@@ -1,59 +1,102 @@
 #include "StartPageView.h"
 #include <QFont>
+#include <QHBoxLayout> // Ensure this is included
 
 StartPageView::StartPageView(QWidget *parent)
     : QWidget(parent)
 {
+    mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(20); // Overall spacing
+    mainLayout->setAlignment(Qt::AlignCenter);
+
     // Title Label
     titleLabel = new QLabel("Select Game Mode", this);
     QFont titleFont = titleLabel->font();
-    titleFont.setPointSize(20);
+    titleFont.setPointSize(24); // Increased title font size
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
     titleLabel->setAlignment(Qt::AlignCenter);
+    mainLayout->addWidget(titleLabel);
 
-    // Game Mode Buttons
-    classicButton = new QPushButton("Classic", this);
-    europeanButton = new QPushButton("European", this);
-    crossButton = new QPushButton("Cross", this);
-    starButton = new QPushButton("Star", this);
-    endgameButton = new QPushButton("Endgame", this);
+    // Columns Layout
+    columnsLayout = new QHBoxLayout();
+    columnsLayout->setSpacing(30); // Spacing between columns
+
+    // --- Column 1: Classic Mode ---
+    classicModeLayout = new QVBoxLayout();
+    classicModeLabel = new QLabel("Classic Mode", this);
+    classicModeLabel->setFont(titleFont); // Reuse title font for section headers
+    classicModeLayout->addWidget(classicModeLabel, 0, Qt::AlignHCenter);
+    classicEnglishButton = new QPushButton("English Board", this);
+    classicEuropeanButton = new QPushButton("European Board", this);
+    classicCrossButton = new QPushButton("Cross Board", this);
+    classicStarButton = new QPushButton("Star Board", this);
+    classicModeLayout->addWidget(classicEnglishButton);
+    classicModeLayout->addWidget(classicEuropeanButton);
+    classicModeLayout->addWidget(classicCrossButton);
+    classicModeLayout->addWidget(classicStarButton);
+    classicModeLayout->addStretch(); // Pushes buttons to the top
+    columnsLayout->addLayout(classicModeLayout);
+
+    // --- Column 2: Special Game Mode ---
+    specialModeLayout = new QVBoxLayout();
+    specialModeLabel = new QLabel("Special Modes", this);
+    specialModeLabel->setFont(titleFont);
+    specialModeLayout->addWidget(specialModeLabel, 0, Qt::AlignHCenter);
+    specialAntiPegButton = new QPushButton("Anti-Peg Mode", this);
+    specialDestinationButton = new QPushButton("Destination Mode", this);
+    specialEndgameButton = new QPushButton("Endgame Scenarios", this);
+    specialModeLayout->addWidget(specialAntiPegButton);
+    specialModeLayout->addWidget(specialDestinationButton);
+    specialModeLayout->addWidget(specialEndgameButton);
+    specialModeLayout->addStretch();
+    columnsLayout->addLayout(specialModeLayout);
+
+    // --- Column 3: Peg Duo Mode ---
+    pegDuoModeLayout = new QVBoxLayout();
+    pegDuoModeLabel = new QLabel("Peg Duo", this);
+    pegDuoModeLabel->setFont(titleFont);
+    pegDuoModeLayout->addWidget(pegDuoModeLabel, 0, Qt::AlignHCenter);
+    pegDuoButton = new QPushButton("Start Peg Duo", this);
+    pegDuoModeLayout->addWidget(pegDuoButton);
+    pegDuoModeLayout->addStretch();
+    columnsLayout->addLayout(pegDuoModeLayout);
+
+    mainLayout->addLayout(columnsLayout);
 
     // Back Button
     backButton = new QPushButton("Back to Home", this);
-
-    // Layout
-    mainLayout = new QVBoxLayout(this);
-    mainLayout->addWidget(titleLabel);
-
-    gridLayout = new QGridLayout();
-    gridLayout->addWidget(classicButton, 0, 0);
-    gridLayout->addWidget(europeanButton, 0, 1);
-    gridLayout->addWidget(crossButton, 1, 0);
-    gridLayout->addWidget(starButton, 1, 1);
-    gridLayout->addWidget(endgameButton, 2, 0, 1, 2); // Span across two columns
-
-    mainLayout->addLayout(gridLayout);
-    mainLayout->addWidget(backButton);
-    mainLayout->setAlignment(Qt::AlignCenter);
-    mainLayout->setSpacing(15);
+    mainLayout->addWidget(backButton, 0, Qt::AlignHCenter); // Center back button
 
     setLayout(mainLayout);
 
     // Connect signals
     connect(backButton, &QPushButton::clicked, this, &StartPageView::backClicked);
-    connect(classicButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("classic"); });
-    connect(europeanButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("european"); });
-    connect(crossButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("cross"); });
-    connect(starButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("star"); });
-    connect(endgameButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("endgame"); });
+
+    // Classic Mode Buttons
+    connect(classicEnglishButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("classic_english"); });
+    connect(classicEuropeanButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("classic_european"); });
+    connect(classicCrossButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("classic_cross"); });
+    connect(classicStarButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("classic_star"); });
+
+    // Special Mode Buttons
+    connect(specialAntiPegButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("special_anti_peg"); });
+    connect(specialDestinationButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("special_destination"); });
+    connect(specialEndgameButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("special_endgame"); });
+
+    // Peg Duo Mode Button
+    connect(pegDuoButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected("peg_duo"); });
 }
 
 StartPageView::~StartPageView()
 {
+    // Qt's parent-child mechanism should handle deletion of layouts and widgets.
 }
