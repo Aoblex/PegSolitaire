@@ -18,8 +18,12 @@ set(PROJECT_SOURCES
         mainwindow.h
         views/HomePageView.cpp
         views/HomePageView.h
+        views/StartPageView.cpp
+        views/StartPageView.h
         controllers/HomePageController.cpp
         controllers/HomePageController.h
+        controllers/StartPageController.cpp
+        controllers/StartPageController.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

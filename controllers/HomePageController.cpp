@@ -5,16 +5,13 @@
 HomePageController::HomePageController(HomePageView *view, QObject *parent)
     : QObject(parent), m_view(view)
 {
-    connect(m_view, &HomePageView::startClicked, this, &HomePageController::onStartClicked);
+    connect(m_view, &HomePageView::startClicked, this, [this]()
+            { emit startClicked(); }); // Emit signal
     connect(m_view, &HomePageView::settingsClicked, this, &HomePageController::onSettingsClicked);
     connect(m_view, &HomePageView::quitClicked, this, &HomePageController::onQuitClicked);
 }
 
-void HomePageController::onStartClicked()
-{
-    qDebug() << "Start button clicked";
-    // Logic to switch to the game board selection view
-}
+// Removed onStartClicked() as it's now a signal emission
 
 void HomePageController::onSettingsClicked()
 {

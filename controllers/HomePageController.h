@@ -12,9 +12,11 @@ public:
     explicit HomePageController(HomePageView *view, QObject *parent = nullptr);
 
 public slots:
-    void onStartClicked();
     void onSettingsClicked();
     void onQuitClicked();
+
+signals:
+    void startClicked(); // Moved from public slot to signal
 
 private:
     HomePageView *m_view;
