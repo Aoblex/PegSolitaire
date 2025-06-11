@@ -6,7 +6,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsEllipseItem>
 #include <QGraphicsRectItem>
-#include "../../models/Board.h" // Adjust path as necessary
+#include "models/Board.h" // Adjust path as necessary
 
 class BoardView : public QGraphicsView
 {
