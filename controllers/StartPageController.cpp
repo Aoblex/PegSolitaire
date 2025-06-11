@@ -1,4 +1,5 @@
 #include "controllers/StartPageController.h"
+#include "models/Board.h" // For BoardType
 #include <QDebug>
 
 StartPageController::StartPageController(StartPageView *view, QObject *parent)
