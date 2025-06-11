@@ -3,7 +3,6 @@
 #include <QDebug>                   // For logging
 #include "models/GridBoard.h"       // For creating specific board types
 #include "models/OffsetGridBoard.h" // For creating specific board types
-#include "views/BoardView.h"        // Ensure BoardView is included
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -13,24 +12,22 @@ MainWindow::MainWindow(QWidget *parent)
       startPageController(new StartPageController(startPageView, this)),
       settingsPageView(new SettingsPageView(this)),
       settingsPageController(new SettingsPageController(settingsPageView, this)),
-      boardView(new BoardView(this)), // Initialize BoardView
-      // boardController(nullptr),    // Initialize BoardController later if needed
+      gameView(new GameView(this)), // Changed from BoardView to GameView
       currentBoardModel(nullptr) // Initialize currentBoardModel
 {
     stackedWidget = new QStackedWidget(this);
     stackedWidget->addWidget(homePageView);
     stackedWidget->addWidget(startPageView);
     stackedWidget->addWidget(settingsPageView);
-    stackedWidget->addWidget(boardView); // Add boardView to stackedWidget
+    stackedWidget->addWidget(gameView); // Add gameView to stackedWidget
 
-    setCentralWidget(stackedWidget);
-
-    // Connect signals for navigation
+    setCentralWidget(stackedWidget);    // Connect signals for navigation
     connect(homePageController, &HomePageController::startClicked, this, &MainWindow::showStartPage);
     connect(homePageController, &HomePageController::settingsClicked, this, &MainWindow::showSettingsPage);
     connect(startPageController, &StartPageController::navigateToHome, this, &MainWindow::showHomePage);
     connect(settingsPageController, &SettingsPageController::navigateToHome, this, &MainWindow::showHomePage);
     connect(settingsPageController, &SettingsPageController::setFullscreen, this, &MainWindow::toggleFullscreen);
+    connect(gameView, &GameView::navigateToHome, this, &MainWindow::showHomePage);
 
     // Direct connection now possible as StartPageController::startGame emits BoardType
     connect(startPageController, &StartPageController::startGame, this, &MainWindow::startGame);
@@ -106,9 +103,8 @@ void MainWindow::startGame(BoardType boardType) // Changed QString to BoardType
     {
         qDebug() << "Main window: Board model created with type (enum):" << static_cast<int>(currentBoardModel->getBoardType())
                  << "Pegs:" << currentBoardModel->getPegCount();
-        boardView->setBoard(currentBoardModel);
-        // boardView->updateView(); // updateView is called by setBoard if board is valid
-        stackedWidget->setCurrentWidget(boardView); // Switch to the board view
+        gameView->setBoard(currentBoardModel);
+        stackedWidget->setCurrentWidget(gameView); // Switch to the game view
     }
     else
     {

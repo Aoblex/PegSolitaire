@@ -31,8 +31,8 @@ private:
     // Add other offset grid-based board setups
 
     QVector<QVector<PegState>> grid;
-    int numRows; // Effective number of rows
-    int numCols; // Effective number of columns or max width
+    int rows; // Effective number of rows
+    int cols; // Effective number of columns or max width
     int pegCount;
     // QString currentBoardType; // Removed, uses protected Board::currentBoardType
 

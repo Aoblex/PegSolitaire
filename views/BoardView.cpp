@@ -1,203 +1,354 @@
 #include "BoardView.h"
-#include "models/GridBoard.h"       // For dynamic_cast and specific drawing
-#include "models/OffsetGridBoard.h" // For dynamic_cast and specific drawing
+#include <QPainter>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <QDebug>
-#include <cmath> // For std::sqrt, std::pow
+#include <QFont>
+#include <QSizePolicy>
 
 BoardView::BoardView(QWidget *parent)
-    : QGraphicsView(parent),
-      currentBoard(nullptr),
-      pegRadius(15.0),  // Default peg radius
-      cellSpacing(40.0) // Default spacing between cell centers
+    : QWidget(parent),
+      mainLayout(nullptr),
+      controlLayout(nullptr),
+      infoLayout(nullptr),
+      boardWidget(nullptr),
+      undoButton(nullptr),
+      resetButton(nullptr),
+      homeButton(nullptr),
+      pegCountLabel(nullptr),
+      instructionLabel(nullptr),
+      boardModel(nullptr)
 {
-    scene = new QGraphicsScene(this);
-    setScene(scene);
-    setRenderHint(QPainter::Antialiasing);
-    // Ensure the view can receive mouse press events even without items at a location
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    setupColors();
+    setupUI();
+    setFocusPolicy(Qt::StrongFocus); // Enable keyboard events
+}
+
+BoardView::~BoardView()
+{
+    // Qt's parent-child mechanism will handle cleanup
+}
+
+void BoardView::setupColors()
+{
+    // Setup beautiful colors for the board
+    pegColor = QColor(139, 69, 19);          // Saddle brown for pegs
+    emptyColor = QColor(245, 245, 220);      // Beige for empty holes
+    blockedColor = QColor(47, 79, 79);       // Dark slate gray for blocked areas
+    selectedColor = QColor(255, 215, 0);     // Gold for selected peg
+    highlightColor = QColor(50, 205, 50);    // Lime green for valid moves
+    boardBackgroundColor = QColor(222, 184, 135); // Burlywood for board background
+}
+
+void BoardView::setupUI()
+{
+    mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(10);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
+
+    // Info layout for peg count and instructions
+    infoLayout = new QHBoxLayout();
+    
+    pegCountLabel = new QLabel("Pegs: 0", this);
+    QFont labelFont = pegCountLabel->font();
+    labelFont.setPointSize(14);
+    labelFont.setBold(true);
+    pegCountLabel->setFont(labelFont);
+    pegCountLabel->setAlignment(Qt::AlignCenter);
+    
+    instructionLabel = new QLabel("Click a peg to select it, then click an empty hole to move", this);
+    instructionLabel->setFont(labelFont);
+    instructionLabel->setAlignment(Qt::AlignCenter);
+    instructionLabel->setWordWrap(true);
+    
+    infoLayout->addWidget(pegCountLabel);
+    infoLayout->addWidget(instructionLabel, 1); // Give more space to instructions
+    
+    mainLayout->addLayout(infoLayout);
+
+    // Board widget - this will be where we draw the board
+    boardWidget = new QWidget(this);
+    boardWidget->setMinimumSize(400, 400);
+    boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    mainLayout->addWidget(boardWidget, 1, Qt::AlignCenter); // Give most space to the board
+
+    // Control buttons layout
+    controlLayout = new QHBoxLayout();
+    
+    undoButton = new QPushButton("Undo", this);
+    resetButton = new QPushButton("Reset", this);
+    homeButton = new QPushButton("Home", this);
+    
+    // Style the buttons
+    QString buttonStyle = "QPushButton {"
+                         "    background-color: #4CAF50;"
+                         "    border: none;"
+                         "    color: white;"
+                         "    padding: 8px 16px;"
+                         "    text-align: center;"
+                         "    font-size: 14px;"
+                         "    font-weight: bold;"
+                         "    border-radius: 4px;"
+                         "}"
+                         "QPushButton:hover {"
+                         "    background-color: #45a049;"
+                         "}"
+                         "QPushButton:pressed {"
+                         "    background-color: #3d8b40;"
+                         "}";
+    
+    undoButton->setStyleSheet(buttonStyle);
+    resetButton->setStyleSheet(buttonStyle);
+    homeButton->setStyleSheet(buttonStyle);
+    
+    controlLayout->addWidget(undoButton);
+    controlLayout->addWidget(resetButton);
+    controlLayout->addWidget(homeButton);
+    controlLayout->setSpacing(10);
+    
+    mainLayout->addLayout(controlLayout);
+
+    // Connect button signals
+    connect(undoButton, &QPushButton::clicked, this, &BoardView::onUndoButtonClicked);
+    connect(resetButton, &QPushButton::clicked, this, &BoardView::onResetButtonClicked);
+    connect(homeButton, &QPushButton::clicked, this, &BoardView::onHomeButtonClicked);
+
+    setLayout(mainLayout);
 }
 
 void BoardView::setBoard(Board *board)
 {
-    currentBoard = board;
-    if (currentBoard)
-    {
+    boardModel = board;
+    if (boardModel) {
         updateView();
+        updatePegCount(boardModel->getPegCount());
+        
+        // Resize the widget based on board size
+        QSize boardSize = calculateBoardSize();
+        boardWidget->setMinimumSize(boardSize);
+        setMinimumSize(boardSize.width() + 40, boardSize.height() + 150); // Extra space for controls
     }
 }
 
 void BoardView::updateView()
 {
-    if (!currentBoard)
+    if (boardWidget) {
+        boardWidget->update();
+        update(); // Update the entire widget
+    }
+}
+
+void BoardView::highlightMoves(const QList<Move> &moves)
+{
+    highlightedMoves = moves;
+    updateView();
+}
+
+void BoardView::updatePegCount(int count)
+{
+    if (pegCountLabel) {
+        pegCountLabel->setText(QString("Pegs: %1").arg(count));
+    }
+}
+
+void BoardView::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event)
+    
+    if (!boardModel) {
         return;
-
-    scene->clear(); // Clear previous items
-
-    // Determine board type for specific drawing logic if needed
-    if (dynamic_cast<GridBoard *>(currentBoard))
-    {
-        drawGridBoard();
-    }
-    else if (dynamic_cast<OffsetGridBoard *>(currentBoard))
-    {
-        drawOffsetGridBoard();
-    }
-    else
-    {
-        // Generic drawing or error
-        qWarning() << "BoardView: Unknown board type for drawing.";
-        return;
     }
 
-    // Adjust scene rect to fit the board
-    // This might need to be more dynamic based on board dimensions
-    // For now, a simple heuristic.
-    if (currentBoard->getRows() > 0 && currentBoard->getCols() > 0)
-    {
-        scene->setSceneRect(0, 0,
-                            currentBoard->getCols() * cellSpacing + cellSpacing,
-                            currentBoard->getRows() * cellSpacing + cellSpacing);
-    }
-    centerOn(scene->sceneRect().center());
-}
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
 
-void BoardView::drawGridBoard()
-{
-    GridBoard *board = static_cast<GridBoard *>(currentBoard);
-    int rows = board->getRows();
-    int cols = board->getCols();
+    // Get board widget geometry
+    QRect boardRect = boardWidget->geometry();
+    
+    // Fill board background
+    painter.fillRect(boardRect, boardBackgroundColor);
 
-    for (int r = 0; r < rows; ++r)
-    {
-        for (int c = 0; c < cols; ++c)
-        {
-            Position pos = {r, c};
-            PegState state = board->getPegState(pos);
-            QPointF scenePos = getScenePosition(pos);
-
-            if (state != PegState::Blocked)
-            {
-                // Draw cell background (e.g., an empty hole placeholder)
-                QGraphicsRectItem *bgCell = scene->addRect(scenePos.x() - pegRadius, scenePos.y() - pegRadius,
-                                                           2 * pegRadius, 2 * pegRadius,
-                                                           QPen(Qt::gray), QBrush(Qt::lightGray));
-                bgCell->setData(0, QVariant::fromValue(pos)); // Store board position
-
-                if (state == PegState::Peg)
-                {
-                    QGraphicsEllipseItem *pegItem = scene->addEllipse(scenePos.x() - pegRadius, scenePos.y() - pegRadius,
-                                                                      2 * pegRadius, 2 * pegRadius,
-                                                                      QPen(Qt::black), QBrush(Qt::blue));
-                    pegItem->setData(0, QVariant::fromValue(pos)); // Store board position
-                }
+    // Draw board cells
+    int rows = boardModel->getRows();
+    int cols = boardModel->getCols();
+    
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            Position pos(r, c);
+            QPoint screenPos = getScreenPosition(pos);
+            
+            // Only draw if position is within the board widget
+            if (boardRect.contains(screenPos)) {
+                drawCell(painter, pos, screenPos);
             }
         }
     }
-}
-
-void BoardView::drawOffsetGridBoard()
-{
-    OffsetGridBoard *board = static_cast<OffsetGridBoard *>(currentBoard);
-    int totalRows = board->getRows();
-    int totalCols = board->getCols(); // Max cols in the bounding box
-
-    for (int r = 0; r < totalRows; ++r)
-    {
-        // For an offset grid, the number of columns per row might vary, or the horizontal position shifts.
-        // The `getCols()` in OffsetGridBoard might return the max width of the bounding box.
-        // We need to iterate through positions that are actually part of the board.
-        for (int c = 0; c < totalCols; ++c)
-        { // Iterate up to totalCols
-            Position pos = {r, c};
-            if (!board->isValidPosition(pos) || board->getPegState(pos) == PegState::Blocked)
-            {
-                continue; // Skip positions not on the board or explicitly blocked
-            }
-
-            PegState state = board->getPegState(pos);
-            QPointF scenePos = getScenePosition(pos); // This needs to handle the offset
-
-            // Draw cell background
-            QGraphicsRectItem *bgCell = scene->addRect(scenePos.x() - pegRadius, scenePos.y() - pegRadius,
-                                                       2 * pegRadius, 2 * pegRadius,
-                                                       QPen(Qt::gray), QBrush(Qt::lightGray));
-            bgCell->setData(0, QVariant::fromValue(pos));
-
-            if (state == PegState::Peg)
-            {
-                QGraphicsEllipseItem *pegItem = scene->addEllipse(scenePos.x() - pegRadius, scenePos.y() - pegRadius,
-                                                                  2 * pegRadius, 2 * pegRadius,
-                                                                  QPen(Qt::black), QBrush(Qt::green)); // Different color for offset board pegs
-                pegItem->setData(0, QVariant::fromValue(pos));
-            }
-        }
-    }
-}
-
-QPointF BoardView::getScenePosition(Position boardPos) const
-{
-    qreal x = (boardPos.col + 0.5) * cellSpacing;
-    qreal y = (boardPos.row + 0.5) * cellSpacing;
-
-    if (currentBoard && dynamic_cast<OffsetGridBoard *>(currentBoard))
-    {
-        // Apply horizontal offset for odd/even rows if it's a hex-like grid
-        // This is a common way to represent hex grids: shift every other row
-        if (boardPos.row % 2 != 0)
-        {
-            x += cellSpacing / 2.0; // Shift odd rows
-        }
-        // For a triangular board, the `col` index is direct if `cellSpacing` accounts for diagonal packing.
-        // If `cellSpacing` is for a square grid, then y might also need adjustment for triangular packing.
-        // For simplicity, current `cellSpacing` is for center-to-center, assuming a grid overlay.
-        // If true isometric/hexagonal projection is needed, this function becomes more complex.
-    }
-    return QPointF(x, y);
-}
-
-Position BoardView::getBoardPosition(QPointF scenePos) const
-{
-    int r = static_cast<int>(floor(scenePos.y() / cellSpacing));
-    int c = 0;
-
-    if (currentBoard && dynamic_cast<OffsetGridBoard *>(currentBoard))
-    {
-        qreal x_adjusted = scenePos.x();
-        if (r % 2 != 0)
-        { // If the row is odd, adjust x back for calculation
-            x_adjusted -= cellSpacing / 2.0;
-        }
-        c = static_cast<int>(floor(x_adjusted / cellSpacing));
-    }
-    else
-    {
-        c = static_cast<int>(floor(scenePos.x() / cellSpacing));
-    }
-
-    // Basic bounds check, more specific validation should be done by Board model
-    if (currentBoard && (r < 0 || r >= currentBoard->getRows() || c < 0 || c >= currentBoard->getCols()))
-    {
-        // Return an invalid position marker or handle error
-        // For now, let's return the calculated one and let the model validate
-    }
-    return {r, c};
 }
 
 void BoardView::mousePressEvent(QMouseEvent *event)
 {
-    QPointF scenePoint = mapToScene(event->pos());
-
-    Position clickedBoardPos = getBoardPosition(scenePoint);
-
-    if (currentBoard && currentBoard->getPegState(clickedBoardPos) != PegState::Blocked)
-    {
-        qDebug() << "BoardView: Clicked on board at: (" << clickedBoardPos.row << "," << clickedBoardPos.col << ") Scene: " << scenePoint;
-        emit pegClicked(clickedBoardPos);
+    if (!boardModel || event->button() != Qt::LeftButton) {
+        return;
     }
-    else
-    {
-        qDebug() << "BoardView: Clicked on invalid or blocked area: (" << clickedBoardPos.row << "," << clickedBoardPos.col << ")";
+
+    Position pos = getBoardPosition(event->pos());
+    
+    // Check if click is within valid board bounds
+    if (pos.row >= 0 && pos.row < boardModel->getRows() && 
+        pos.col >= 0 && pos.col < boardModel->getCols()) {
+        
+        PegState state = boardModel->getPegState(pos);
+        if (state != PegState::Blocked) {
+            qDebug() << "BoardView: Clicked position (" << pos.row << "," << pos.col << ")";
+            emit pegClicked(pos);
+        }
     }
-    QGraphicsView::mousePressEvent(event); // Call base class if not handled or for other features
+}
+
+void BoardView::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Space) {
+        emit suggestMoveClicked();
+    } else {
+        QWidget::keyPressEvent(event);
+    }
+}
+
+void BoardView::onUndoButtonClicked()
+{
+    emit undoClicked();
+}
+
+void BoardView::onResetButtonClicked()
+{
+    emit resetClicked();
+}
+
+void BoardView::onHomeButtonClicked()
+{
+    emit homeClicked();
+}
+
+Position BoardView::getBoardPosition(const QPoint &point)
+{
+    if (!boardModel) {
+        return Position(-1, -1);
+    }
+
+    QRect boardRect = boardWidget->geometry();
+    
+    // Calculate relative position within the board widget
+    int relativeX = point.x() - boardRect.left();
+    int relativeY = point.y() - boardRect.top();
+    
+    // Convert to board coordinates
+    int col = (relativeX - BOARD_MARGIN) / CELL_SIZE;
+    int row = (relativeY - BOARD_MARGIN) / CELL_SIZE;
+    
+    return Position(row, col);
+}
+
+QPoint BoardView::getScreenPosition(const Position &pos)
+{
+    if (!boardWidget) {
+        return QPoint(-1, -1);
+    }
+
+    QRect boardRect = boardWidget->geometry();
+    
+    int x = boardRect.left() + BOARD_MARGIN + pos.col * CELL_SIZE + CELL_SIZE / 2;
+    int y = boardRect.top() + BOARD_MARGIN + pos.row * CELL_SIZE + CELL_SIZE / 2;
+    
+    return QPoint(x, y);
+}
+
+bool BoardView::isPositionHighlighted(const Position &pos)
+{
+    for (const Move &move : highlightedMoves) {
+        if ((move.from.row == pos.row && move.from.col == pos.col) ||
+            (move.to.row == pos.row && move.to.col == pos.col)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void BoardView::drawCell(QPainter &painter, const Position &pos, const QPoint &screenPos)
+{
+    if (!boardModel) {
+        return;
+    }
+
+    PegState state = boardModel->getPegState(pos);
+    
+    // Choose color based on state and highlights
+    QColor cellColor;
+    bool highlighted = isPositionHighlighted(pos);
+    
+    switch (state) {
+        case PegState::Peg:
+            cellColor = highlighted ? selectedColor : pegColor;
+            break;
+        case PegState::Empty:
+            cellColor = highlighted ? highlightColor : emptyColor;
+            break;
+        case PegState::Blocked:
+            cellColor = blockedColor;
+            break;
+    }
+
+    if (state == PegState::Blocked) {
+        // Don't draw anything for blocked cells
+        return;
+    }
+
+    // Draw the cell background (for grid appearance)
+    painter.setPen(QPen(Qt::black, 1));
+    painter.setBrush(QBrush(boardBackgroundColor));
+    QRect cellRect(screenPos.x() - CELL_SIZE/2, screenPos.y() - CELL_SIZE/2, CELL_SIZE, CELL_SIZE);
+    painter.drawRect(cellRect);
+
+    if (state == PegState::Peg) {
+        // Draw peg as a filled circle
+        painter.setPen(QPen(Qt::black, 2));
+        painter.setBrush(QBrush(cellColor));
+        painter.drawEllipse(screenPos, PEG_RADIUS, PEG_RADIUS);
+        
+        // Add some shading for 3D effect
+        painter.setPen(QPen(Qt::white, 1));
+        painter.drawArc(screenPos.x() - PEG_RADIUS/2, screenPos.y() - PEG_RADIUS/2, 
+                       PEG_RADIUS, PEG_RADIUS, 45 * 16, 90 * 16);
+    } else if (state == PegState::Empty) {
+        // Draw empty hole as a circle outline
+        painter.setPen(QPen(Qt::black, 2));
+        painter.setBrush(QBrush(cellColor));
+        painter.drawEllipse(screenPos, PEG_RADIUS, PEG_RADIUS);
+        
+        // Draw inner shadow for hole effect
+        painter.setPen(QPen(Qt::darkGray, 1));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(screenPos, PEG_RADIUS - 2, PEG_RADIUS - 2);
+    }
+
+    // Draw highlight border if needed
+    if (highlighted) {
+        painter.setPen(QPen(highlightColor, 3));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(screenPos, PEG_RADIUS + 4, PEG_RADIUS + 4);
+    }
+}
+
+QSize BoardView::calculateBoardSize()
+{
+    if (!boardModel) {
+        return QSize(400, 400);
+    }
+
+    int rows = boardModel->getRows();
+    int cols = boardModel->getCols();
+    
+    int width = cols * CELL_SIZE + 2 * BOARD_MARGIN;
+    int height = rows * CELL_SIZE + 2 * BOARD_MARGIN;
+    
+    return QSize(width, height);
 }

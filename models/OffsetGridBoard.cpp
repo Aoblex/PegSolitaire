@@ -5,12 +5,12 @@
 #include <cmath>     // For std::abs, std::round
 #include <QDebug>
 
-OffsetGridBoard::OffsetGridBoard(QObject *parent) : Board(parent), numRows(0), numCols(0), pegCount(0)
+OffsetGridBoard::OffsetGridBoard(QObject *parent) : Board(parent), rows(0), cols(0), pegCount(0)
 {
     initializeBoard(BoardType::Triangular); // Example default
 }
 
-OffsetGridBoard::OffsetGridBoard(BoardType boardType, QObject *parent) : Board(parent), numRows(0), numCols(0), pegCount(0)
+OffsetGridBoard::OffsetGridBoard(BoardType boardType, QObject *parent) : Board(parent), rows(0), cols(0), pegCount(0)
 {
     initializeBoard(boardType);
 }
@@ -38,70 +38,6 @@ void OffsetGridBoard::initializeBoard(BoardType boardType)
     }
 }
 
-void OffsetGridBoard::setupTriangular()
-{
-    numRows = 5;
-    numCols = numRows; // Max columns needed for representation
-    grid.resize(numRows);
-    for (int i = 0; i < numRows; ++i)
-    {
-        grid[i].fill(PegState::Blocked, numCols); // Initialize all to Blocked
-    }
-    pegCount = 0;
-
-    for (int r = 0; r < numRows; ++r)
-    {
-        for (int c = 0; c <= r; ++c)
-        {
-            grid[r][c] = PegState::Peg;
-            pegCount++;
-        }
-    }
-
-    if (numRows > 0 && numCols > 0 && grid[0][0] == PegState::Peg)
-    {
-        grid[0][0] = PegState::Empty;
-        if (pegCount > 0)
-            pegCount--; // Decrement if it was a peg
-    }
-}
-
-void OffsetGridBoard::setupStar()
-{
-    numRows = 5;
-    numCols = 5;
-    grid.resize(numRows);
-    for (int i = 0; i < numRows; ++i)
-    {
-        grid[i].fill(PegState::Blocked, numCols);
-    }
-
-    int starLayout[5][5] = {
-        {0, 0, 1, 0, 0},
-        {0, 1, 1, 1, 0},
-        {1, 1, 1, 1, 1},
-        {0, 1, 1, 1, 0},
-        {0, 0, 1, 0, 0}};
-    pegCount = 0;
-    for (int r = 0; r < numRows; ++r)
-    {
-        for (int c = 0; c < numCols; ++c)
-        {
-            if (starLayout[r][c] == 1)
-            {
-                grid[r][c] = PegState::Peg;
-                pegCount++;
-            }
-        }
-    }
-
-    if (numRows > 2 && numCols > 2 && grid[2][2] == PegState::Peg) // Center for 5x5
-    {
-        grid[2][2] = PegState::Empty;
-        if (pegCount > 0)
-            pegCount--;
-    }
-}
 
 PegState OffsetGridBoard::getPegState(Position pos) const
 {
@@ -135,7 +71,7 @@ void OffsetGridBoard::setPegState(Position pos, PegState state)
 
 bool OffsetGridBoard::isValidPosition(Position pos) const
 {
-    if (pos.row < 0 || pos.row >= numRows)
+    if (pos.row < 0 || pos.row >= rows)
         return false;
 
     if (currentBoardType == BoardType::Triangular)
@@ -147,7 +83,7 @@ bool OffsetGridBoard::isValidPosition(Position pos) const
     {
         // For the star, it's within numCols bounds AND not initially Blocked
         // This check is a bit redundant if getPegState is used, but good for clarity.
-        if (pos.col < 0 || pos.col >= numCols)
+        if (pos.col < 0 || pos.col >= cols)
             return false;
         // The star shape is defined by non-Blocked cells in the initial setup.
         // A position is valid if it's within bounds and was part of the star shape.
@@ -156,7 +92,7 @@ bool OffsetGridBoard::isValidPosition(Position pos) const
         return true; // Further check in getPegState will return Blocked if not part of star
     }
     // Default for other potential offset boards, check within rectangular bounds
-    return pos.col >= 0 && pos.col < numCols;
+    return pos.col >= 0 && pos.col < cols;
 }
 
 QVector<Move> OffsetGridBoard::getValidMoves() const
@@ -200,9 +136,9 @@ QVector<Move> OffsetGridBoard::getValidMoves() const
         directions.append(qMakePair(Position{1, 1}, Position{2, 2}));     // Down-Right
     }
 
-    for (int r = 0; r < numRows; ++r)
+    for (int r = 0; r < rows; ++r)
     {
-        for (int c = 0; c < numCols; ++c) // Iterate through the bounding box
+        for (int c = 0; c < cols; ++c) // Iterate through the bounding box
         {
             Position from = {r, c};
             if (getPegState(from) == PegState::Peg)
@@ -300,13 +236,13 @@ bool OffsetGridBoard::undoLastMove()
 
 int OffsetGridBoard::getRows() const
 {
-    return numRows;
+    return rows;
 }
 
 int OffsetGridBoard::getCols() const
 {
     // This might represent max columns in the bounding box
-    return numCols;
+    return cols;
 }
 
 int OffsetGridBoard::getPegCount() const

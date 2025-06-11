@@ -4,6 +4,7 @@
 */
 
 #include "models/GridBoard.h"
+#include "models/OffsetGridBoard.h"
 #include <QVector>
 #include <QDebug>
 
@@ -97,4 +98,69 @@ void GridBoard::setupCross() {
         grid[rows / 2][cols / 2] = PegState::Empty;
     if (pegCount > 0)
         pegCount--; // Account for the empty center
+}
+
+void OffsetGridBoard::setupTriangular()
+{
+    rows = 5;
+    cols = rows; // Max columns needed for representation
+    grid.resize(rows);
+    for (int i = 0; i < rows; ++i)
+    {
+        grid[i].fill(PegState::Blocked, cols); // Initialize all to Blocked
+    }
+    pegCount = 0;
+
+    for (int r = 0; r < rows; ++r)
+    {
+        for (int c = 0; c <= r; ++c)
+        {
+            grid[r][c] = PegState::Peg;
+            pegCount++;
+        }
+    }
+
+    if (rows > 0 && cols > 0 && grid[0][0] == PegState::Peg)
+    {
+        grid[0][0] = PegState::Empty;
+        if (pegCount > 0)
+            pegCount--; // Decrement if it was a peg
+    }
+}
+
+void OffsetGridBoard::setupStar()
+{
+    rows = 5;
+    cols = 5;
+    grid.resize(rows);
+    for (int i = 0; i < rows; ++i)
+    {
+        grid[i].fill(PegState::Blocked, cols);
+    }
+
+    int starLayout[5][5] = {
+        {0, 0, 1, 0, 0},
+        {0, 1, 1, 1, 0},
+        {1, 1, 1, 1, 1},
+        {0, 1, 1, 1, 0},
+        {0, 0, 1, 0, 0}};
+    pegCount = 0;
+    for (int r = 0; r < rows; ++r)
+    {
+        for (int c = 0; c < cols; ++c)
+        {
+            if (starLayout[r][c] == 1)
+            {
+                grid[r][c] = PegState::Peg;
+                pegCount++;
+            }
+        }
+    }
+
+    if (rows > 2 && cols > 2 && grid[2][2] == PegState::Peg) // Center for 5x5
+    {
+        grid[2][2] = PegState::Empty;
+        if (pegCount > 0)
+            pegCount--;
+    }
 }

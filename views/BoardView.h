@@ -2,41 +2,190 @@
 #define BOARDVIEW_H
 
 #include <QWidget>
-#include <QGraphicsView>
-#include <QGraphicsScene>
-#include <QGraphicsEllipseItem>
-#include <QGraphicsRectItem>
-#include "models/Board.h" // Adjust path as necessary
+#include <QPushButton>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QPainter>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QList>
+#include "models/Board.h"
 
-class BoardView : public QGraphicsView
+/**
+ * @brief View class for displaying and interacting with the Peg Solitaire board
+ * 
+ * This class handles the visual representation of the board, peg interactions,
+ * move highlighting, and provides control buttons for game management.
+ */
+class BoardView : public QWidget
 {
     Q_OBJECT
 
 public:
     explicit BoardView(QWidget *parent = nullptr);
+    ~BoardView();
+
+    /**
+     * @brief Set the board model to display
+     * @param board Pointer to the board model
+     */
     void setBoard(Board *board);
+
+    /**
+     * @brief Update the view to reflect current board state
+     */
     void updateView();
 
+    /**
+     * @brief Highlight valid moves on the board
+     * @param moves List of moves to highlight
+     */
+    void highlightMoves(const QList<Move> &moves);
+
+    /**
+     * @brief Update the peg count display
+     * @param count Number of pegs remaining
+     */
+    void updatePegCount(int count);
+
 signals:
-    void pegClicked(Position pos);
+    /**
+     * @brief Emitted when a peg or empty cell is clicked
+     * @param pos Position that was clicked
+     */
+    void pegClicked(const Position &pos);
+
+    /**
+     * @brief Emitted when undo button is clicked
+     */
+    void undoClicked();
+
+    /**
+     * @brief Emitted when reset button is clicked
+     */
+    void resetClicked();
+
+    /**
+     * @brief Emitted when home button is clicked
+     */
+    void homeClicked();
+
+    /**
+     * @brief Emitted when suggest move button is clicked (spacebar)
+     */
+    void suggestMoveClicked();
 
 protected:
+    /**
+     * @brief Handle paint events to draw the board
+     */
+    void paintEvent(QPaintEvent *event) override;
+
+    /**
+     * @brief Handle mouse press events for peg selection
+     */
     void mousePressEvent(QMouseEvent *event) override;
 
+    /**
+     * @brief Handle key press events (e.g., spacebar for suggest move)
+     */
+    void keyPressEvent(QKeyEvent *event) override;
+
+private slots:
+    /**
+     * @brief Handle undo button press
+     */
+    void onUndoButtonClicked();
+
+    /**
+     * @brief Handle reset button press
+     */
+    void onResetButtonClicked();
+
+    /**
+     * @brief Handle home button press
+     */
+    void onHomeButtonClicked();
+
 private:
-    QGraphicsScene *scene;
-    Board *currentBoard;
-    qreal pegRadius;
-    qreal cellSpacing;
-
-    void drawGridBoard();
-    void drawOffsetGridBoard();
-    // Add other draw methods for different board types if needed
-
-    // Helper to map board coordinates to scene coordinates
-    QPointF getScenePosition(Position boardPos) const;
-    // Helper to map scene coordinates back to board positions
-    Position getBoardPosition(QPointF scenePos) const;
+    // UI Components
+    QVBoxLayout *mainLayout;
+    QHBoxLayout *controlLayout;
+    QHBoxLayout *infoLayout;
+    QWidget *boardWidget;
+    
+    // Control buttons
+    QPushButton *undoButton;
+    QPushButton *resetButton;
+    QPushButton *homeButton;
+    
+    // Info display
+    QLabel *pegCountLabel;
+    QLabel *instructionLabel;
+    
+    // Board data
+    Board *boardModel;
+    QList<Move> highlightedMoves;
+    
+    // Visual properties
+    static const int CELL_SIZE = 40;
+    static const int PEG_RADIUS = 15;
+    static const int BOARD_MARGIN = 20;
+    
+    // Colors
+    QColor pegColor;
+    QColor emptyColor;
+    QColor blockedColor;
+    QColor selectedColor;
+    QColor highlightColor;
+    QColor boardBackgroundColor;
+    
+    /**
+     * @brief Initialize the UI components
+     */
+    void setupUI();
+    
+    /**
+     * @brief Setup color scheme for the board
+     */
+    void setupColors();
+    
+    /**
+     * @brief Convert mouse coordinates to board position
+     * @param point Mouse coordinates
+     * @return Board position, or invalid position if outside board
+     */
+    Position getBoardPosition(const QPoint &point);
+    
+    /**
+     * @brief Convert board position to screen coordinates
+     * @param pos Board position
+     * @return Screen coordinates for the center of the cell
+     */
+    QPoint getScreenPosition(const Position &pos);
+    
+    /**
+     * @brief Check if a position is highlighted for moves
+     * @param pos Position to check
+     * @return True if position is highlighted
+     */
+    bool isPositionHighlighted(const Position &pos);
+    
+    /**
+     * @brief Draw a single cell (peg, empty, or blocked)
+     * @param painter Painter object
+     * @param pos Board position
+     * @param screenPos Screen coordinates
+     */
+    void drawCell(QPainter &painter, const Position &pos, const QPoint &screenPos);
+    
+    /**
+     * @brief Calculate the board widget size based on board dimensions
+     * @return Recommended size for the board widget
+     */
+    QSize calculateBoardSize();
 };
 
 #endif // BOARDVIEW_H

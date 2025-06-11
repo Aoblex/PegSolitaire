@@ -25,12 +25,16 @@ set(PROJECT_SOURCES
         models/OffsetGridBoard.h
         views/BoardView.cpp
         views/BoardView.h
+        views/GameView.cpp
+        views/GameView.h
         views/HomePageView.cpp
         views/HomePageView.h
         views/StartPageView.cpp
         views/StartPageView.h
         views/SettingsPageView.cpp
         views/SettingsPageView.h
+        controllers/BoardController.cpp
+        controllers/BoardController.h
         controllers/HomePageController.cpp
         controllers/HomePageController.h
         controllers/StartPageController.cpp
