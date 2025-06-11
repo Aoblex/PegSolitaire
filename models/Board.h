@@ -9,12 +9,11 @@
 // Enum to represent the type of board
 enum class BoardType
 {
-    ClassicEnglish,
-    ClassicEuropean,
-    ClassicCross,
-    ClassicStar, // For GridBoard fallback or specific GridBoard star
-    Triangular,  // For OffsetGridBoard
-    StarShape    // For OffsetGridBoard (distinct from ClassicStar if needed)
+    English,
+    European,
+    Cross,
+    Triangular,
+    Star
     // Add other board types here
 };
 
@@ -65,23 +64,39 @@ class Board : public QObject
     Q_OBJECT
 public:
     explicit Board(QObject *parent = nullptr);
+    explicit Board(BoardType boardType, QObject *parent = nullptr);
     virtual ~Board() = default;
 
-    // Pure virtual functions to be implemented by derived classes
-    virtual void initializeBoard(BoardType boardType) = 0; // Changed from QString
-    virtual QVector<Move> getValidMoves() const = 0; // Changed from std::vector to QVector
-    virtual bool performMove(const Move &move) = 0;
-    virtual bool undoLastMove() = 0; // Add undo functionality
-    virtual PegState getPegState(Position pos) const = 0;
-    virtual int getRows() const = 0;
-    virtual int getCols() const = 0; // May not be applicable for all board types, but useful for grid-based ones
-    virtual int getPegCount() const = 0;
-    virtual bool isGameOver() const = 0;
-    virtual BoardType getBoardType() const = 0; // Changed from QString
-    // Add any other common board operations here
+    // Board functions - no longer pure virtual
+    void initializeBoard(BoardType boardType);
+    QVector<Move> getValidMoves() const;
+    bool performMove(const Move &move);
+    bool undoLastMove();
+    PegState getPegState(Position pos) const;
+    void setPegState(Position pos, PegState state);
+    bool isValidPosition(Position pos) const;
+    int getRows() const;
+    int getCols() const;
+    int getPegCount() const;
+    bool isGameOver() const;
+    BoardType getBoardType() const;
 
-protected: // Added protected to allow derived classes to access currentBoardType
-    BoardType currentBoardType; // Added
+private:
+    // Board setup methods
+    void setupEnglishStandard();
+    void setupEuropeanStandard();
+    void setupCross();
+    void setupTriangular();
+    void setupStar();
+
+    // Board data
+    QVector<QVector<PegState>> grid;
+    int rows;
+    int cols;
+    int pegCount;
+
+protected:
+    BoardType currentBoardType;
     QVector<Move> moveHistory; // Track move history for undo
 };
 

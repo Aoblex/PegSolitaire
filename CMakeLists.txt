@@ -19,10 +19,6 @@ set(PROJECT_SOURCES
         models/BoardSetup.cpp
         models/Board.cpp
         models/Board.h
-        models/GridBoard.cpp
-        models/GridBoard.h
-        models/OffsetGridBoard.cpp
-        models/OffsetGridBoard.h
         views/BoardView.cpp
         views/BoardView.h
         views/GameView.cpp

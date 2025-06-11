@@ -1,8 +1,7 @@
 #include "mainwindow.h"
 #include <QStackedWidget>
 #include <QDebug>                   // For logging
-#include "models/GridBoard.h"       // For creating specific board types
-#include "models/OffsetGridBoard.h" // For creating specific board types
+#include "models/Board.h"           // For creating board instances
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -76,26 +75,25 @@ void MainWindow::startGame(BoardType boardType) // Changed QString to BoardType
     // Create the appropriate board model based on boardType
     switch (boardType)
     {
-        case BoardType::ClassicEnglish:
-            currentBoardModel = new GridBoard(BoardType::ClassicEnglish, this);
+        case BoardType::English:
+            currentBoardModel = new Board(BoardType::English, this);
             break;
-        case BoardType::ClassicEuropean:
-            currentBoardModel = new GridBoard(BoardType::ClassicEuropean, this);
+        case BoardType::European:
+            currentBoardModel = new Board(BoardType::European, this);
             break;
-        case BoardType::ClassicCross:
-            currentBoardModel = new GridBoard(BoardType::ClassicCross, this);
+        case BoardType::Cross:
+            currentBoardModel = new Board(BoardType::Cross, this);
             break;
-        case BoardType::ClassicStar: // This could be GridBoard or OffsetGridBoard
-            // For now, let's assume OffsetGridBoard is preferred for Star, or make a specific StarShape for it
-            currentBoardModel = new OffsetGridBoard(BoardType::ClassicStar, this); // Or BoardType::StarShape
+        case BoardType::Star:
+            currentBoardModel = new Board(BoardType::Star, this);
             break;
         case BoardType::Triangular:
-            currentBoardModel = new OffsetGridBoard(BoardType::Triangular, this);
+            currentBoardModel = new Board(BoardType::Triangular, this);
             break;
         // Add other board types here
         default:
             qDebug() << "Main window: Unknown or unsupported board type (enum):" << static_cast<int>(boardType);
-            currentBoardModel = new GridBoard(BoardType::ClassicEnglish, this); // Fallback
+            currentBoardModel = new Board(BoardType::English, this); // Fallback
             break;
     }
 

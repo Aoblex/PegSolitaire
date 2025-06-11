@@ -76,25 +76,25 @@ StartPageView::StartPageView(QWidget *parent)
 
     // Classic Mode Buttons
     connect(classicEnglishButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicEnglish); });
+            { emit gameModeSelected(BoardType::English); });
     connect(classicEuropeanButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicEuropean); });
+            { emit gameModeSelected(BoardType::European); });
     connect(classicCrossButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicCross); });
+            { emit gameModeSelected(BoardType::Cross); });
     connect(classicStarButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicStar); });
+            { emit gameModeSelected(BoardType::Star); });
 
     // Special Mode Buttons
     connect(specialAntiPegButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicEnglish); });
+            { emit gameModeSelected(BoardType::English); });
     connect(specialDestinationButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicEnglish); });
+            { emit gameModeSelected(BoardType::English); });
     connect(specialEndgameButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicEnglish); });
+            { emit gameModeSelected(BoardType::English); });
 
     // Peg Duo Mode Button
     connect(pegDuoButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::ClassicEnglish); });
+            { emit gameModeSelected(BoardType::English); });
 }
 
 StartPageView::~StartPageView()

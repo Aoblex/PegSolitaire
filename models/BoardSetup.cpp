@@ -1,14 +1,13 @@
 /*
-    * GridBoard.cpp
+    * BoardSetup.cpp
     * This file implements the board layout.
 */
 
-#include "models/GridBoard.h"
-#include "models/OffsetGridBoard.h"
+#include "models/Board.h"
 #include <QVector>
 #include <QDebug>
 
-void GridBoard::setupEnglishStandard()
+void Board::setupEnglishStandard()
 {
     rows = 7;
     cols = 7;
@@ -34,7 +33,7 @@ void GridBoard::setupEnglishStandard()
         pegCount--; // Account for the empty center
 }
 
-void GridBoard::setupEuropeanStandard()
+void Board::setupEuropeanStandard()
 {
     rows = 7;
     cols = 7;
@@ -75,7 +74,7 @@ void GridBoard::setupEuropeanStandard()
     }
 }
 
-void GridBoard::setupCross() {
+void Board::setupCross() {
     rows = 7;
     cols = 7;
     grid.resize(rows);
@@ -100,7 +99,7 @@ void GridBoard::setupCross() {
         pegCount--; // Account for the empty center
 }
 
-void OffsetGridBoard::setupTriangular()
+void Board::setupTriangular()
 {
     rows = 5;
     cols = rows; // Max columns needed for representation
@@ -128,7 +127,7 @@ void OffsetGridBoard::setupTriangular()
     }
 }
 
-void OffsetGridBoard::setupStar()
+void Board::setupStar()
 {
     rows = 5;
     cols = 5;
