@@ -16,7 +16,8 @@ public slots:
     void onQuitClicked();
 
 signals:
-    void startClicked(); // Moved from public slot to signal
+    void startClicked();    // Moved from public slot to signal
+    void settingsClicked(); // Add this signal
 
 private:
     HomePageView *m_view;

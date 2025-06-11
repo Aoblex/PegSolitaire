@@ -16,7 +16,7 @@ HomePageController::HomePageController(HomePageView *view, QObject *parent)
 void HomePageController::onSettingsClicked()
 {
     qDebug() << "Settings button clicked";
-    // Logic to switch to the settings view
+    emit settingsClicked(); // Emit the signal
 }
 
 void HomePageController::onQuitClicked()

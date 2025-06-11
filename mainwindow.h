@@ -7,6 +7,8 @@
 #include "controllers/HomePageController.h"
 #include "views/StartPageView.h"
 #include "controllers/StartPageController.h"
+#include "views/SettingsPageView.h"             // Add this
+#include "controllers/SettingsPageController.h" // Add this
 
 class MainWindow : public QMainWindow
 {
@@ -19,13 +21,17 @@ public:
 private slots:
     void showHomePage();
     void showStartPage();
+    void showSettingsPage(); // Add this
     void startGame(const QString &boardType);
+    void toggleFullscreen(bool fullscreen); // Add this
 
 private:
     HomePageView *homePageView;
     HomePageController *homePageController;
     StartPageView *startPageView;
     StartPageController *startPageController;
+    SettingsPageView *settingsPageView;             // Add this
+    SettingsPageController *settingsPageController; // Add this
 
     QStackedWidget *stackedWidget; // Replace currentView
 };

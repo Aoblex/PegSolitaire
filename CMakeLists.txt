@@ -20,10 +20,14 @@ set(PROJECT_SOURCES
         views/HomePageView.h
         views/StartPageView.cpp
         views/StartPageView.h
+        views/SettingsPageView.cpp
+        views/SettingsPageView.h
         controllers/HomePageController.cpp
         controllers/HomePageController.h
         controllers/StartPageController.cpp
         controllers/StartPageController.h
+        controllers/SettingsPageController.cpp
+        controllers/SettingsPageController.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

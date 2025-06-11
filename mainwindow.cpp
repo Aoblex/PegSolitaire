@@ -6,18 +6,24 @@ MainWindow::MainWindow(QWidget *parent)
       homePageView(new HomePageView(this)),
       homePageController(new HomePageController(homePageView, this)),
       startPageView(new StartPageView(this)),
-      startPageController(new StartPageController(startPageView, this))
+      startPageController(new StartPageController(startPageView, this)),
+      settingsPageView(new SettingsPageView(this)),                              // Add this
+      settingsPageController(new SettingsPageController(settingsPageView, this)) // Add this
 {
     stackedWidget = new QStackedWidget(this);
     stackedWidget->addWidget(homePageView);
     stackedWidget->addWidget(startPageView);
+    stackedWidget->addWidget(settingsPageView); // Add this
 
     setCentralWidget(stackedWidget);
 
     // Connect signals for navigation
     connect(homePageController, &HomePageController::startClicked, this, &MainWindow::showStartPage);
+    connect(homePageController, &HomePageController::settingsClicked, this, &MainWindow::showSettingsPage); // Add this
     connect(startPageController, &StartPageController::navigateToHome, this, &MainWindow::showHomePage);
     connect(startPageController, &StartPageController::startGame, this, &MainWindow::startGame);
+    connect(settingsPageController, &SettingsPageController::navigateToHome, this, &MainWindow::showHomePage);    // Add this
+    connect(settingsPageController, &SettingsPageController::setFullscreen, this, &MainWindow::toggleFullscreen); // Add this
 
     showHomePage(); // Show home page initially
     setWindowTitle("Peg Solitaire");
@@ -41,9 +47,27 @@ void MainWindow::showStartPage()
     stackedWidget->setCurrentWidget(startPageView);
 }
 
+void MainWindow::showSettingsPage() // Add this function
+{
+    settingsPageView->setFullscreenChecked(windowState().testFlag(Qt::WindowFullScreen));
+    stackedWidget->setCurrentWidget(settingsPageView);
+}
+
 void MainWindow::startGame(const QString &boardType)
 {
     // Placeholder for starting the actual game
     qDebug() << "Main window: Start game with board type:" << boardType;
     // Here you would typically create and show the GameView
+}
+
+void MainWindow::toggleFullscreen(bool fullscreen) // Add this function
+{
+    if (fullscreen)
+    {
+        showFullScreen();
+    }
+    else
+    {
+        showNormal();
+    }
 }
