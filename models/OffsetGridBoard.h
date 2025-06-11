@@ -18,6 +18,7 @@ public:
     bool isValidPosition(Position pos) const;       // Not overriding from Board
     QVector<Move> getValidMoves() const override;
     bool performMove(const Move &move) override; // Changed to const Move&
+    bool undoLastMove() override; // Implementation for undo functionality
     int getRows() const override;                // May need re-evaluation for non-rectangular shapes
     int getCols() const override;                // May need re-evaluation for non-rectangular shapes
     int getPegCount() const override;

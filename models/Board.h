@@ -31,6 +31,9 @@ struct Position
 {
     int row;
     int col;
+    
+    // Constructor
+    Position(int r = 0, int c = 0) : row(r), col(c) {}
 
     // Operator for comparing positions, useful for std::map or std::set
     bool operator<(const Position &other) const
@@ -68,6 +71,7 @@ public:
     virtual void initializeBoard(BoardType boardType) = 0; // Changed from QString
     virtual QVector<Move> getValidMoves() const = 0; // Changed from std::vector to QVector
     virtual bool performMove(const Move &move) = 0;
+    virtual bool undoLastMove() = 0; // Add undo functionality
     virtual PegState getPegState(Position pos) const = 0;
     virtual int getRows() const = 0;
     virtual int getCols() const = 0; // May not be applicable for all board types, but useful for grid-based ones
@@ -78,6 +82,7 @@ public:
 
 protected: // Added protected to allow derived classes to access currentBoardType
     BoardType currentBoardType; // Added
+    QVector<Move> moveHistory; // Track move history for undo
 };
 
 #endif // BOARD_H

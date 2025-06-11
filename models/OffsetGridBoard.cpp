@@ -274,10 +274,28 @@ bool OffsetGridBoard::performMove(const Move &move)
             setPegState(move.from, PegState::Empty);
             setPegState(move.jumped, PegState::Empty);
             setPegState(move.to, PegState::Peg);
+            moveHistory.append(move); // Save the move to history
             return true;
         }
     }
     return false;
+}
+
+bool OffsetGridBoard::undoLastMove()
+{
+    if (moveHistory.isEmpty()) {
+        return false; // No moves to undo
+    }
+    
+    // Get the last move from history
+    Move lastMove = moveHistory.takeLast();
+    
+    // Reverse the move
+    setPegState(lastMove.to, PegState::Empty);     // Remove peg from destination
+    setPegState(lastMove.jumped, PegState::Peg);   // Restore jumped peg
+    setPegState(lastMove.from, PegState::Peg);     // Restore original peg
+    
+    return true;
 }
 
 int OffsetGridBoard::getRows() const
