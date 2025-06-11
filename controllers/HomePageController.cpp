@@ -1,4 +1,4 @@
-#include "HomePageController.h"
+#include "controllers/HomePageController.h"
 #include <QApplication>
 #include <QDebug>
 

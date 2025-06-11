@@ -2,7 +2,7 @@
 #define HOMEPAGECONTROLLER_H
 
 #include <QObject>
-#include "../views/HomePageView.h"
+#include "views/HomePageView.h"
 
 class HomePageController : public QObject
 {

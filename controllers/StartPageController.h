@@ -2,7 +2,7 @@
 #define STARTPAGECONTROLLER_H
 
 #include <QObject>
-#include "../views/StartPageView.h"
+#include "views/StartPageView.h"
 
 class StartPageController : public QObject
 {

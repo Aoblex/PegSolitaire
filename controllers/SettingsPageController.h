@@ -2,7 +2,7 @@
 #define SETTINGSPAGECONTROLLER_H
 
 #include <QObject>
-#include "../views/SettingsPageView.h"
+#include "views/SettingsPageView.h"
 
 class SettingsPageController : public QObject
 {

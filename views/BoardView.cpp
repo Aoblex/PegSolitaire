@@ -1,6 +1,6 @@
 #include "BoardView.h"
-#include "../../models/GridBoard.h"       // For dynamic_cast and specific drawing
-#include "../../models/OffsetGridBoard.h" // For dynamic_cast and specific drawing
+#include "models/GridBoard.h"       // For dynamic_cast and specific drawing
+#include "models/OffsetGridBoard.h" // For dynamic_cast and specific drawing
 #include <QMouseEvent>
 #include <QDebug>
 #include <cmath> // For std::sqrt, std::pow

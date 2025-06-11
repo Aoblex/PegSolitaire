@@ -1,4 +1,4 @@
-#include "StartPageController.h"
+#include "controllers/StartPageController.h"
 #include <QDebug>
 
 StartPageController::StartPageController(StartPageView *view, QObject *parent)

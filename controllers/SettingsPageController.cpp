@@ -1,4 +1,4 @@
-#include "SettingsPageController.h"
+#include "controllers/SettingsPageController.h"
 #include <QDebug>
 
 SettingsPageController::SettingsPageController(SettingsPageView *view, QObject *parent)
