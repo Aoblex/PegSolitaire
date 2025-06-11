@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QGridLayout> // Keep for now, might remove if QHBoxLayout is sufficient
 #include <QHBoxLayout> // For columns
+#include "models/Board.h" // Added for BoardType
 
 class StartPageView : public QWidget
 {
@@ -18,7 +19,7 @@ public:
 
 signals:
     void backClicked();
-    void gameModeSelected(const QString &mode);
+    void gameModeSelected(BoardType mode); // Changed from const QString&
 
 private:
     QLabel *titleLabel;

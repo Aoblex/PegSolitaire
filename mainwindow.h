@@ -26,7 +26,7 @@ private slots:
     void showHomePage();
     void showStartPage();
     void showSettingsPage();
-    void startGame(const QString &boardType);
+    void startGame(BoardType boardType); // Changed QString to BoardType
     void toggleFullscreen(bool fullscreen);
 
 private:

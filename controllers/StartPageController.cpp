@@ -14,9 +14,9 @@ void StartPageController::onBackClicked()
     emit navigateToHome();
 }
 
-void StartPageController::onGameModeSelected(const QString &mode)
+void StartPageController::onGameModeSelected(BoardType boardType)
 {
-    qDebug() << "StartPage: Game mode selected -" << mode;
-    emit startGame(mode);
+    // qDebug() << "StartPage: Game mode selected -" << boardType;
+    emit startGame(boardType);
     // Logic to switch to the game view with the selected mode
 }

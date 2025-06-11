@@ -1,157 +1,44 @@
-#include "GridBoard.h"
+#include "models/GridBoard.h"
 #include <QVector>
 #include <stdexcept> // For std::out_of_range
 #include <QDebug>
 
-GridBoard::GridBoard() : rows(0), cols(0), pegCount(0)
+GridBoard::GridBoard(QObject *parent) : Board(parent), rows(0), cols(0), pegCount(0)
 {
-    // Default constructor, perhaps initialize with a default board type or leave empty
-    // initializeBoard("english_standard"); // Example
+    // Default constructor, initialize with a default board type
+    initializeBoard(BoardType::ClassicEnglish); // Example default
 }
 
-GridBoard::GridBoard(const QString &boardType) : rows(0), cols(0), pegCount(0)
+GridBoard::GridBoard(BoardType boardType, QObject *parent) : Board(parent), rows(0), cols(0), pegCount(0)
 {
     initializeBoard(boardType);
 }
 
-void GridBoard::initializeBoard(const QString &boardType)
+void GridBoard::initializeBoard(BoardType boardType)
 {
-    currentBoardType = boardType;
+    this->currentBoardType = boardType; // Use the inherited member
     pegCount = 0;
     grid.clear();
 
-    if (boardType == "classic_english" || boardType == "english_standard")
+    switch (boardType)
     {
-        setupEnglishStandard();
-    }
-    else if (boardType == "classic_european" || boardType == "european_standard")
-    {
-        setupEuropeanStandard();
-    }
-    else if (boardType == "classic_cross")
-    {
-        rows = 7;
-        cols = 7;
-        grid.resize(rows);
-        for (int i = 0; i < rows; ++i)
-        {
-            grid[i].fill(PegState::Blocked, cols);
-        }
-
-        for (int r = 0; r < rows; ++r)
-        {
-            for (int c = 0; c < cols; ++c)
-            {
-                if (!((r < 2 || r > 4) && (c < 2 || c > 4)))
-                {
-                    grid[r][c] = PegState::Peg;
-                    pegCount++;
-                }
-            }
-        }
-        if (rows > 0 && cols > 0 && rows / 2 < grid.size() && cols / 2 < grid[rows / 2].size())
-            grid[rows / 2][cols / 2] = PegState::Empty;
-        if (pegCount > 0)
-            pegCount--; // Account for the empty center
-    }
-    else if (boardType == "classic_star")
-    {
-        qWarning() << "Star board is complex for GridBoard, consider OffsetGridBoard.";
-        setupEnglishStandard(); // Fallback
-    }
-    else
-    {
-        qWarning() << "Unknown grid board type:" << boardType;
-        setupEnglishStandard();
-    }
-}
-
-void GridBoard::setupEnglishStandard()
-{
-    rows = 7;
-    cols = 7;
-    grid.resize(rows);
-    for (int i = 0; i < rows; ++i)
-    {
-        grid[i].fill(PegState::Blocked, cols);
-    }
-
-    // Define the cross shape for English Standard
-    int validCells[33][2] = {
-        {0, 2}, {0, 3}, {0, 4}, {1, 2}, {1, 3}, {1, 4}, {2, 0}, {2, 1}, {2, 2}, {2, 3}, {2, 4}, {2, 5}, {2, 6}, {3, 0}, {3, 1}, {3, 2}, {3, 4}, {3, 5}, {3, 6}, // {3,3} is empty
-        {4, 0},
-        {4, 1},
-        {4, 2},
-        {4, 3},
-        {4, 4},
-        {4, 5},
-        {4, 6},
-        {5, 2},
-        {5, 3},
-        {5, 4},
-        {6, 2},
-        {6, 3},
-        {6, 4}};
-
-    pegCount = 0;
-    for (const auto &cell : validCells)
-    {
-        if (isValidPosition({cell[0], cell[1]}))
-        {
-            grid[cell[0]][cell[1]] = PegState::Peg;
-            pegCount++;
-        }
-    }
-
-    if (isValidPosition({3, 3}))
-    {
-        grid[3][3] = PegState::Empty;
-        // pegCount is already correct as it counts pegs, and {3,3} was not added as a peg.
-    }
-    else
-    {
-        qWarning() << "Center position {3,3} is invalid for English Standard setup.";
-    }
-}
-
-void GridBoard::setupEuropeanStandard()
-{
-    rows = 7;
-    cols = 7;
-    grid.resize(rows);
-    for (int i = 0; i < rows; ++i)
-    {
-        grid[i].fill(PegState::Peg, cols);
-    }
-
-    // Block corners for European style
-    int blockedCoords[12][2] = {
-        {0, 0}, {0, 1}, {0, 5}, {0, 6}, {1, 0}, {1, 6}, {5, 0}, {5, 6}, {6, 0}, {6, 1}, {6, 5}, {6, 6}};
-
-    for (const auto &coord : blockedCoords)
-    {
-        if (isValidPosition({coord[0], coord[1]}))
-        {
-            grid[coord[0]][coord[1]] = PegState::Blocked;
-        }
-    }
-
-    if (isValidPosition({3, 3}))
-    {
-        grid[3][3] = PegState::Empty;
-    }
-
-    // Recalculate pegCount accurately
-    pegCount = 0;
-    for (int r = 0; r < rows; ++r)
-    {
-        for (int c = 0; c < cols; ++c)
-        {
-            if (grid[r][c] == PegState::Peg)
-            {
-                pegCount++;
-            }
-        }
+        case BoardType::ClassicEnglish:
+            setupEnglishStandard();
+            break;
+        case BoardType::ClassicEuropean:
+            setupEuropeanStandard();
+            break;
+        case BoardType::ClassicCross:
+            setupCross();
+            break;
+        case BoardType::ClassicStar: // Fallback for GridBoard if it handles a simple star
+            qWarning() << "ClassicStar is typically handled by OffsetGridBoard, using English Standard fallback for GridBoard.";
+            setupEnglishStandard(); // Fallback
+            break;
+        default:
+            qWarning() << "Unknown or unsupported grid board type:" << static_cast<int>(boardType);
+            setupEnglishStandard(); // Default fallback
+            break;
     }
 }
 
@@ -277,7 +164,7 @@ bool GridBoard::isGameOver() const
     return getValidMoves().isEmpty();
 }
 
-QString GridBoard::getBoardType() const
+BoardType GridBoard::getBoardType() const // Changed QString to BoardType
 {
     return currentBoardType;
 }

@@ -29,9 +29,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(homePageController, &HomePageController::startClicked, this, &MainWindow::showStartPage);
     connect(homePageController, &HomePageController::settingsClicked, this, &MainWindow::showSettingsPage);
     connect(startPageController, &StartPageController::navigateToHome, this, &MainWindow::showHomePage);
-    connect(startPageController, &StartPageController::startGame, this, &MainWindow::startGame);
     connect(settingsPageController, &SettingsPageController::navigateToHome, this, &MainWindow::showHomePage);
     connect(settingsPageController, &SettingsPageController::setFullscreen, this, &MainWindow::toggleFullscreen);
+
+    // Direct connection now possible as StartPageController::startGame emits BoardType
+    connect(startPageController, &StartPageController::startGame, this, &MainWindow::startGame);
 
     showHomePage(); // Show home page initially
     setWindowTitle("Peg Solitaire");
@@ -61,9 +63,9 @@ void MainWindow::showSettingsPage() // Add this function
     stackedWidget->setCurrentWidget(settingsPageView);
 }
 
-void MainWindow::startGame(const QString &boardType)
+void MainWindow::startGame(BoardType boardType) // Changed QString to BoardType
 {
-    qDebug() << "Main window: Attempting to start game with board type:" << boardType;
+    qDebug() << "Main window: Attempting to start game with board type (enum):" << static_cast<int>(boardType);
 
     // Clean up previous board model if it exists
     if (currentBoardModel)
@@ -75,37 +77,34 @@ void MainWindow::startGame(const QString &boardType)
     // if (boardController) { delete boardController; boardController = nullptr; }
 
     // Create the appropriate board model based on boardType
-    if (boardType == "classic_english" || boardType == "english_standard")
+    switch (boardType)
     {
-        currentBoardModel = new GridBoard("english_standard");
-    }
-    else if (boardType == "classic_european" || boardType == "european_standard")
-    {
-        currentBoardModel = new GridBoard("european_standard");
-    }
-    else if (boardType == "classic_cross")
-    {
-        currentBoardModel = new GridBoard("classic_cross");
-    }
-    else if (boardType == "classic_star") // Assuming classic_star is an OffsetGridBoard type
-    {
-        currentBoardModel = new OffsetGridBoard("star"); // Use "star" or "classic_star" as defined in OffsetGridBoard
-    }
-    else if (boardType == "triangular")
-    {
-        currentBoardModel = new OffsetGridBoard("triangular");
-    }
-    // Add other board types here (e.g., special modes might need different models or configurations)
-    else
-    {
-        qDebug() << "Main window: Unknown or unsupported board type:" << boardType;
-        // Default to English Standard or show an error message
-        currentBoardModel = new GridBoard("english_standard"); // Fallback
+        case BoardType::ClassicEnglish:
+            currentBoardModel = new GridBoard(BoardType::ClassicEnglish, this);
+            break;
+        case BoardType::ClassicEuropean:
+            currentBoardModel = new GridBoard(BoardType::ClassicEuropean, this);
+            break;
+        case BoardType::ClassicCross:
+            currentBoardModel = new GridBoard(BoardType::ClassicCross, this);
+            break;
+        case BoardType::ClassicStar: // This could be GridBoard or OffsetGridBoard
+            // For now, let's assume OffsetGridBoard is preferred for Star, or make a specific StarShape for it
+            currentBoardModel = new OffsetGridBoard(BoardType::ClassicStar, this); // Or BoardType::StarShape
+            break;
+        case BoardType::Triangular:
+            currentBoardModel = new OffsetGridBoard(BoardType::Triangular, this);
+            break;
+        // Add other board types here
+        default:
+            qDebug() << "Main window: Unknown or unsupported board type (enum):" << static_cast<int>(boardType);
+            currentBoardModel = new GridBoard(BoardType::ClassicEnglish, this); // Fallback
+            break;
     }
 
     if (currentBoardModel)
     {
-        qDebug() << "Main window: Board model created:" << currentBoardModel->getBoardType()
+        qDebug() << "Main window: Board model created with type (enum):" << static_cast<int>(currentBoardModel->getBoardType())
                  << "Pegs:" << currentBoardModel->getPegCount();
         boardView->setBoard(currentBoardModel);
         // boardView->updateView(); // updateView is called by setBoard if board is valid
@@ -113,7 +112,7 @@ void MainWindow::startGame(const QString &boardType)
     }
     else
     {
-        qDebug() << "Main window: Failed to create board model for type:" << boardType;
+        qDebug() << "Main window: Failed to create board model for type:" << static_cast<int>(boardType);
         showHomePage(); // Fallback to home page if board creation fails
     }
 }

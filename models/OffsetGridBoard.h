@@ -1,17 +1,18 @@
 #ifndef OFFSETGRIDBOARD_H
 #define OFFSETGRIDBOARD_H
 
-#include "Board.h"
-#include <QVector> // Ensure QVector is included
+#include "models/Board.h"
+#include <QVector>
+#include <QString>
 
 class OffsetGridBoard : public Board
 {
+    Q_OBJECT
 public:
-    OffsetGridBoard();
-    // Constructor that takes a specific board type (e.g., "triangular", "star")
-    OffsetGridBoard(const QString &boardType);
+    explicit OffsetGridBoard(QObject *parent = nullptr);
+    explicit OffsetGridBoard(BoardType boardType, QObject *parent = nullptr); // Changed QString to BoardType
 
-    void initializeBoard(const QString &boardType) override;
+    void initializeBoard(BoardType boardType) override; // Changed QString to BoardType
     PegState getPegState(Position pos) const override;
     void setPegState(Position pos, PegState state); // Not overriding from Board
     bool isValidPosition(Position pos) const;       // Not overriding from Board
@@ -21,7 +22,7 @@ public:
     int getCols() const override;                // May need re-evaluation for non-rectangular shapes
     int getPegCount() const override;
     bool isGameOver() const override;
-    QString getBoardType() const override;
+    BoardType getBoardType() const override; // Changed QString to BoardType
 
 private:
     void setupTriangular();
@@ -32,7 +33,7 @@ private:
     int numRows; // Effective number of rows
     int numCols; // Effective number of columns or max width
     int pegCount;
-    QString currentBoardType;
+    // QString currentBoardType; // Removed, uses protected Board::currentBoardType
 
     // Helper to convert logical row/col to storage indices if needed,
     // or to handle the offset logic directly in move generation.

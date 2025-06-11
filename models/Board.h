@@ -4,6 +4,19 @@
 #include <QString>
 #include <QVector> // Added for QVector
 #include <QPair>   // Added for QPair (used in Position)
+#include <QObject> // Added for QObject inheritance
+
+// Enum to represent the type of board
+enum class BoardType
+{
+    ClassicEnglish,
+    ClassicEuropean,
+    ClassicCross,
+    ClassicStar, // For GridBoard fallback or specific GridBoard star
+    Triangular,  // For OffsetGridBoard
+    StarShape    // For OffsetGridBoard (distinct from ClassicStar if needed)
+    // Add other board types here
+};
 
 // Enum to represent the state of a cell on the board
 enum class PegState
@@ -44,13 +57,15 @@ struct Move
     Position to;
 };
 
-class Board
+class Board : public QObject
 {
+    Q_OBJECT
 public:
+    explicit Board(QObject *parent = nullptr);
     virtual ~Board() = default;
 
     // Pure virtual functions to be implemented by derived classes
-    virtual void initializeBoard(const QString &boardType) = 0;
+    virtual void initializeBoard(BoardType boardType) = 0; // Changed from QString
     virtual QVector<Move> getValidMoves() const = 0; // Changed from std::vector to QVector
     virtual bool performMove(const Move &move) = 0;
     virtual PegState getPegState(Position pos) const = 0;
@@ -58,8 +73,11 @@ public:
     virtual int getCols() const = 0; // May not be applicable for all board types, but useful for grid-based ones
     virtual int getPegCount() const = 0;
     virtual bool isGameOver() const = 0;
-    virtual QString getBoardType() const = 0;
+    virtual BoardType getBoardType() const = 0; // Changed from QString
     // Add any other common board operations here
+
+protected: // Added protected to allow derived classes to access currentBoardType
+    BoardType currentBoardType; // Added
 };
 
 #endif // BOARD_H

@@ -16,6 +16,15 @@ set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
         mainwindow.h
+        models/BoardSetup.cpp
+        models/Board.cpp
+        models/Board.h
+        models/GridBoard.cpp
+        models/GridBoard.h
+        models/OffsetGridBoard.cpp
+        models/OffsetGridBoard.h
+        views/BoardView.cpp
+        views/BoardView.h
         views/HomePageView.cpp
         views/HomePageView.h
         views/StartPageView.cpp

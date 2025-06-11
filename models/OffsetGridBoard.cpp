@@ -1,37 +1,40 @@
-#include "OffsetGridBoard.h"
+#include "models/OffsetGridBoard.h"
+#include "models/Board.h"
 #include <QVector>
 #include <stdexcept> // For std::out_of_range
 #include <cmath>     // For std::abs, std::round
 #include <QDebug>
 
-OffsetGridBoard::OffsetGridBoard() : numRows(0), numCols(0), pegCount(0)
+OffsetGridBoard::OffsetGridBoard(QObject *parent) : Board(parent), numRows(0), numCols(0), pegCount(0)
 {
-    initializeBoard("triangular"); // Example default
+    initializeBoard(BoardType::Triangular); // Example default
 }
 
-OffsetGridBoard::OffsetGridBoard(const QString &boardType) : numRows(0), numCols(0), pegCount(0)
+OffsetGridBoard::OffsetGridBoard(BoardType boardType, QObject *parent) : Board(parent), numRows(0), numCols(0), pegCount(0)
 {
     initializeBoard(boardType);
 }
 
-void OffsetGridBoard::initializeBoard(const QString &boardType)
+void OffsetGridBoard::initializeBoard(BoardType boardType)
 {
-    currentBoardType = boardType;
+    this->currentBoardType = boardType; // Use the inherited member
     pegCount = 0;
     grid.clear();
 
-    if (boardType == "triangular")
+    switch (boardType)
     {
-        setupTriangular();
-    }
-    else if (boardType == "classic_star" || boardType == "star")
-    {
-        setupStar();
-    }
-    else
-    {
-        qWarning() << "Unknown offset grid board type:" << boardType;
-        // Fallback or throw error
+        case BoardType::Triangular:
+            setupTriangular();
+            break;
+        case BoardType::StarShape: // Renamed from classic_star to avoid conflict if GridBoard has one
+        case BoardType::ClassicStar: // Allow ClassicStar to map to StarShape here
+            setupStar();
+            break;
+        default:
+            qWarning() << "Unknown or unsupported offset grid board type:" << static_cast<int>(boardType);
+            // Fallback or throw error
+            setupTriangular(); // Default fallback for OffsetGridBoard
+            break;
     }
 }
 
@@ -135,12 +138,12 @@ bool OffsetGridBoard::isValidPosition(Position pos) const
     if (pos.row < 0 || pos.row >= numRows)
         return false;
 
-    if (currentBoardType == "triangular")
+    if (currentBoardType == BoardType::Triangular)
     {
         // For triangular, col is valid from 0 up to row index
         return pos.col >= 0 && pos.col <= pos.row;
     }
-    else if (currentBoardType == "star" || currentBoardType == "classic_star")
+    else if (currentBoardType == BoardType::StarShape || currentBoardType == BoardType::ClassicStar)
     {
         // For the star, it's within numCols bounds AND not initially Blocked
         // This check is a bit redundant if getPegState is used, but good for clarity.
@@ -164,7 +167,7 @@ QVector<Move> OffsetGridBoard::getValidMoves() const
     // { {dr_jumped, dc_jumped}, {dr_target, dc_target} }
     QVector<QPair<Position, Position>> directions;
 
-    if (currentBoardType == "triangular")
+    if (currentBoardType == BoardType::Triangular)
     {
         // Moves for a triangular board (6 directions)
         // Horizontal
@@ -177,7 +180,7 @@ QVector<Move> OffsetGridBoard::getValidMoves() const
         directions.append(qMakePair(Position{1, 0}, Position{2, 0})); // Down-Left
         directions.append(qMakePair(Position{1, 1}, Position{2, 2})); // Down-Right
     }
-    else if (currentBoardType == "star" || currentBoardType == "classic_star")
+    else if (currentBoardType == BoardType::StarShape || currentBoardType == BoardType::ClassicStar)
     {
         // Moves for a hex grid (star board is often on a hex grid)
         // These are standard 6 hex jump directions if rows are NOT offset in storage
@@ -233,7 +236,7 @@ bool OffsetGridBoard::performMove(const Move &move)
         // This re-checks the path, similar to getValidMoves logic for the specific move
         bool validJumpPath = false;
         QVector<QPair<Position, Position>> directions;
-        if (currentBoardType == "triangular")
+        if (currentBoardType == BoardType::Triangular)
         {
             directions.append(qMakePair(Position{0, -1}, Position{0, -2}));
             directions.append(qMakePair(Position{0, 1}, Position{0, 2}));
@@ -242,7 +245,7 @@ bool OffsetGridBoard::performMove(const Move &move)
             directions.append(qMakePair(Position{1, 0}, Position{2, 0}));
             directions.append(qMakePair(Position{1, 1}, Position{2, 2}));
         }
-        else if (currentBoardType == "star" || currentBoardType == "classic_star")
+        else if (currentBoardType == BoardType::StarShape || currentBoardType == BoardType::ClassicStar)
         {
             directions.append(qMakePair(Position{-1, 0}, Position{-2, 0}));
             directions.append(qMakePair(Position{1, 0}, Position{2, 0}));
@@ -298,7 +301,7 @@ bool OffsetGridBoard::isGameOver() const
     return getValidMoves().isEmpty();
 }
 
-QString OffsetGridBoard::getBoardType() const
+BoardType OffsetGridBoard::getBoardType() const // Changed QString to BoardType
 {
     return currentBoardType;
 }

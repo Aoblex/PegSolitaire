@@ -1,4 +1,5 @@
 #include "StartPageView.h"
+#include "models/Board.h" // Include BoardType definition
 #include <QFont>
 #include <QHBoxLayout> // Ensure this is included
 
@@ -75,25 +76,25 @@ StartPageView::StartPageView(QWidget *parent)
 
     // Classic Mode Buttons
     connect(classicEnglishButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("classic_english"); });
+            { emit gameModeSelected(BoardType::ClassicEnglish); });
     connect(classicEuropeanButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("classic_european"); });
+            { emit gameModeSelected(BoardType::ClassicEuropean); });
     connect(classicCrossButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("classic_cross"); });
+            { emit gameModeSelected(BoardType::ClassicCross); });
     connect(classicStarButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("classic_star"); });
+            { emit gameModeSelected(BoardType::ClassicStar); });
 
     // Special Mode Buttons
     connect(specialAntiPegButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("special_anti_peg"); });
+            { emit gameModeSelected(BoardType::ClassicEnglish); });
     connect(specialDestinationButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("special_destination"); });
+            { emit gameModeSelected(BoardType::ClassicEnglish); });
     connect(specialEndgameButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("special_endgame"); });
+            { emit gameModeSelected(BoardType::ClassicEnglish); });
 
     // Peg Duo Mode Button
     connect(pegDuoButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected("peg_duo"); });
+            { emit gameModeSelected(BoardType::ClassicEnglish); });
 }
 
 StartPageView::~StartPageView()

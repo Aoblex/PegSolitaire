@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "views/StartPageView.h"
+#include "models/Board.h" // Added for BoardType
 
 class StartPageController : public QObject
 {
@@ -13,11 +14,11 @@ public:
 
 signals:
     void navigateToHome();
-    void startGame(const QString &boardType);
+    void startGame(BoardType boardType); // Changed from const QString&
 
 public slots:
     void onBackClicked();
-    void onGameModeSelected(const QString &mode);
+    void onGameModeSelected(BoardType boardType);
 
 private:
     StartPageView *m_view;
