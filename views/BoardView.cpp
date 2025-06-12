@@ -148,13 +148,13 @@ void BoardView::paintEvent(QPaintEvent *event)
     }
 
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    // Get board widget geometry
+    painter.setRenderHint(QPainter::Antialiasing);    // Get board widget geometry
     QRect boardRect = boardWidget->geometry();
     
-    // Fill board background
-    painter.fillRect(boardRect, boardBackgroundColor);
+    // Get the centered board rectangle
+    QRect centeredBoardRect = getCenteredBoardRect();
+      // Fill the centered board background
+    painter.fillRect(centeredBoardRect, boardBackgroundColor);
 
     // Draw board cells
     int rows = boardModel->getRows();
@@ -243,15 +243,18 @@ void BoardView::onHomeButtonClicked()
 
 Position BoardView::getBoardPosition(const QPoint &point)
 {
-    if (!boardModel) {
+    if (!boardModel || !boardWidget) {
         return Position(-1, -1);
     }
 
-    QRect boardRect = boardWidget->geometry();
+    QRect centeredBoardRect = getCenteredBoardRect();
+    if (centeredBoardRect.isEmpty()) {
+        return Position(-1, -1);
+    }
     
-    // Calculate relative position within the board widget
-    int relativeX = point.x() - boardRect.left();
-    int relativeY = point.y() - boardRect.top();
+    // Calculate relative position within the centered board
+    int relativeX = point.x() - centeredBoardRect.left();
+    int relativeY = point.y() - centeredBoardRect.top();
     
     // Convert to board coordinates
     int col = (relativeX - boardMargin) / cellSize;
@@ -262,14 +265,17 @@ Position BoardView::getBoardPosition(const QPoint &point)
 
 QPoint BoardView::getScreenPosition(const Position &pos)
 {
-    if (!boardWidget) {
+    if (!boardWidget || !boardModel) {
         return QPoint(-1, -1);
     }
 
-    QRect boardRect = boardWidget->geometry();
+    QRect centeredBoardRect = getCenteredBoardRect();
+    if (centeredBoardRect.isEmpty()) {
+        return QPoint(-1, -1);
+    }
     
-    int x = boardRect.left() + boardMargin + pos.col * cellSize + cellSize / 2;
-    int y = boardRect.top() + boardMargin + pos.row * cellSize + cellSize / 2;
+    int x = centeredBoardRect.left() + boardMargin + pos.col * cellSize + cellSize / 2;
+    int y = centeredBoardRect.top() + boardMargin + pos.row * cellSize + cellSize / 2;
     
     return QPoint(x, y);
 }
@@ -411,9 +417,29 @@ void BoardView::calculateDynamicSizes()
     pegRadius = static_cast<int>(cellSize * 0.3);
     pegRadius = qMax(pegRadius, 6);   // Minimum peg size
     pegRadius = qMin(pegRadius, 35);  // Maximum peg size
-    
-    // Adjust board margin based on cell size
+      // Adjust board margin based on cell size
     boardMargin = static_cast<int>(cellSize * 0.4);
     boardMargin = qMax(boardMargin, 8);   // Minimum margin
     boardMargin = qMin(boardMargin, 50);  // Maximum margin
+}
+
+QRect BoardView::getCenteredBoardRect()
+{
+    if (!boardModel || !boardWidget) {
+        return QRect();
+    }
+
+    QRect boardRect = boardWidget->geometry();
+    
+    // Calculate the actual board size
+    int rows = boardModel->getRows();
+    int cols = boardModel->getCols();
+    int boardWidth = cols * cellSize + 2 * boardMargin;
+    int boardHeight = rows * cellSize + 2 * boardMargin;
+    
+    // Center the board within the widget
+    int startX = boardRect.left() + (boardRect.width() - boardWidth) / 2;
+    int startY = boardRect.top() + (boardRect.height() - boardHeight) / 2;
+    
+    return QRect(startX, startY, boardWidth, boardHeight);
 }

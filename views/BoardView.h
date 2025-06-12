@@ -187,8 +187,7 @@ private:
      * @param pos Board position
      * @param screenPos Screen coordinates
      */
-    void drawCell(QPainter &painter, const Position &pos, const QPoint &screenPos);
-      /**
+    void drawCell(QPainter &painter, const Position &pos, const QPoint &screenPos);    /**
      * @brief Calculate the board widget size based on board dimensions
      * @return Recommended size for the board widget
      */
@@ -198,6 +197,12 @@ private:
      * @brief Calculate optimal cell size based on available space
      */
     void calculateDynamicSizes();
+    
+    /**
+     * @brief Get the centered board rectangle within the board widget
+     * @return Rectangle representing the centered board area
+     */
+    QRect getCenteredBoardRect();
 };
 
 #endif // BOARDVIEW_H
