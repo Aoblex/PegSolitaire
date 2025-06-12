@@ -29,6 +29,8 @@ set(PROJECT_SOURCES
         views/StartPageView.h
         views/SettingsPageView.cpp
         views/SettingsPageView.h
+        views/LoadingCircle.cpp
+        views/LoadingCircle.h
         controllers/BoardController.cpp
         controllers/BoardController.h
         controllers/HomePageController.cpp
@@ -37,6 +39,8 @@ set(PROJECT_SOURCES
         controllers/StartPageController.h
         controllers/SettingsPageController.cpp
         controllers/SettingsPageController.h
+        controllers/StrategyWorker.cpp
+        controllers/StrategyWorker.h
         utils/ButtonStyles.cpp
         utils/ButtonStyles.h
 )

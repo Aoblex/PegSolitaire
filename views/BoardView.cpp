@@ -192,6 +192,9 @@ void BoardView::resizeEvent(QResizeEvent *event)
             updateView();
         });
     }
+    
+    // Emit signal to notify that the board view has been resized
+    emit boardViewResized();
 }
 
 void BoardView::showEvent(QShowEvent *event)

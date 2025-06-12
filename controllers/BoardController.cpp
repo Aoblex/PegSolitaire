@@ -2,9 +2,7 @@
 #include <QDebug>
 #include <QMutexLocker>
 
-// Static member definitions for symmetry optimization
-QSet<quint64> BoardController::failedBoardStates;
-QMutex BoardController::failedStatesMutex;
+// Static member definitions removed - now managed by StrategyWorker
 
 BoardController::BoardController(QObject *parent)
     : QObject(parent),
@@ -12,8 +10,17 @@ BoardController::BoardController(QObject *parent)
       boardView(nullptr),
       selectedPosition({-1, -1}),
       hasPegSelected(false),
+      loadingCircle(nullptr),
+      strategyWorker(nullptr),
+      isComputingStrategy(false),
       currentKeyboardPosition({-1, -1})
 {
+    // Create strategy worker
+    strategyWorker = new StrategyWorker(this);
+    connect(strategyWorker, &StrategyWorker::strategyComputed,
+            this, &BoardController::onStrategyComputed);
+    connect(strategyWorker, &StrategyWorker::computationCancelled,
+            this, &BoardController::onStrategyComputationCancelled);
 }
 
 void BoardController::setBoardModel(Board *model)
@@ -37,6 +44,13 @@ void BoardController::setBoardView(BoardView *view)
     if (boardView) {
         // Connect view signals to controller slots
         connect(boardView, &BoardView::pegClicked, this, &BoardController::onPegCellClicked);
+        connect(boardView, &BoardView::boardViewResized, this, &BoardController::onBoardViewResized);
+        
+        // If loading circle exists, update its parent
+        if (loadingCircle) {
+            loadingCircle->setParent(boardView);
+            loadingCircle->resize(boardView->size());
+        }
     }
 }
 
@@ -96,8 +110,16 @@ void BoardController::onPegCellClicked(const Position &pos)
                     moveFound = true;
                     break;
                 }
-            }
-              if (moveFound && boardModel->performMove(attemptedMove)) {
+            }            if (moveFound && boardModel->performMove(attemptedMove)) {
+                // Cancel any ongoing strategy computation since board state changed
+                if (isComputingStrategy && strategyWorker) {
+                    strategyWorker->requestCancellation();
+                    if (loadingCircle) {
+                        loadingCircle->stopAnimation();
+                    }
+                    isComputingStrategy = false;
+                }
+                
                 qDebug() << "BoardController: Move performed from (" << attemptedMove.from.row << "," << attemptedMove.from.col 
                          << ") to (" << attemptedMove.to.row << "," << attemptedMove.to.col 
                          << ") jumping (" << attemptedMove.jumped.row << "," << attemptedMove.jumped.col << ")";
@@ -129,7 +151,17 @@ void BoardController::onUndoClicked()
     if (!boardModel) {
         return;
     }
-      if (boardModel->undoLastMove()) {
+    
+    if (boardModel->undoLastMove()) {
+        // Cancel any ongoing strategy computation since board state changed
+        if (isComputingStrategy && strategyWorker) {
+            strategyWorker->requestCancellation();
+            if (loadingCircle) {
+                loadingCircle->stopAnimation();
+            }
+            isComputingStrategy = false;
+        }
+        
         qDebug() << "BoardController: Move undone successfully";
         emit informationUpdated("Move undone successfully!\nReturned to previous state.");
         clearSelection();
@@ -148,7 +180,17 @@ void BoardController::onResetClicked()
     if (!boardModel) {
         return;
     }
-      qDebug() << "BoardController: Resetting board";
+    
+    // Cancel any ongoing strategy computation
+    if (isComputingStrategy && strategyWorker) {
+        strategyWorker->requestCancellation();
+        if (loadingCircle) {
+            loadingCircle->stopAnimation();
+        }
+        isComputingStrategy = false;
+    }
+    
+    qDebug() << "BoardController: Resetting board";
     emit informationUpdated("Board reset!\nGame restarted with fresh board.");
     
     // Re-initialize the board with its current type
@@ -174,27 +216,44 @@ void BoardController::onSuggestMoveClicked()
         return;
     }
     
-    Move suggestedMove = getSuggestedMove();
-    if (suggestedMove.from.row != -1) {
-        qDebug() << "BoardController: Suggesting winning move from (" << suggestedMove.from.row << "," << suggestedMove.from.col 
-                 << ") to (" << suggestedMove.to.row << "," << suggestedMove.to.col << ")";
-        emit informationUpdated(QString("Suggested winning move:\nFrom (%1,%2) to (%3,%4)\nThis move guarantees victory!")
-                              .arg(suggestedMove.from.row).arg(suggestedMove.from.col)
-                              .arg(suggestedMove.to.row).arg(suggestedMove.to.col));
-        
-        // Clear current selection and highlight suggested move
-        clearSelection();
-        selectedPosition = suggestedMove.from;
-        hasPegSelected = true;
-        currentValidMoves.clear();
-        currentValidMoves.append(suggestedMove);
-        
-        emit highlightMovesSignal(currentValidMoves);
-    } else {
-        qDebug() << "BoardController: No winning moves found";
-        emit informationUpdated("💀 No winning moves found or current state too complicated!\nPlease try a different strategy.");
-        // The deadGameDetected signal will be emitted by getStrategicMove()
+    // If already computing strategy, ignore the request
+    if (isComputingStrategy) {
+        qDebug() << "BoardController: Strategy computation already in progress";
+        emit informationUpdated("Strategy computation in progress...\nPlease wait for current calculation to complete.");
+        return;
     }
+    
+    // Start the asynchronous strategy computation
+    isComputingStrategy = true;
+    
+    // Set up the loading circle if not already created
+    if (!loadingCircle) {
+        loadingCircle = new LoadingCircle(boardView);
+    }
+    
+    // Copy current board state to pass to worker thread
+    QVector<QVector<PegState>> boardData;
+    boardData.resize(boardModel->getRows());
+    for (int r = 0; r < boardModel->getRows(); ++r) {
+        boardData[r].resize(boardModel->getCols());
+        for (int c = 0; c < boardModel->getCols(); ++c) {
+            Position pos(r, c);
+            boardData[r][c] = boardModel->getPegState(pos);
+        }
+    }
+    
+    // Show loading circle with appropriate message
+    if (loadingCircle && boardView) {
+        loadingCircle->setMessage("Searching for winning move...");
+        loadingCircle->resize(boardView->size());
+        loadingCircle->startAnimation();
+    }
+    
+    // Start the strategy worker thread
+    strategyWorker->computeStrategy(boardModel->getBoardType(), boardData);
+    
+    emit informationUpdated("Analyzing board...\nSearching for optimal strategy...");
+    qDebug() << "BoardController: Started asynchronous strategy computation";
 }
 
 void BoardController::updateView()
@@ -348,11 +407,10 @@ bool BoardController::solveBoard(Board* board)
 
     // Get unique board state identifier
     quint64 boardStateId = board->getBoardStateId();
-    
-    // Check if this board state (or any symmetric equivalent) has been flagged as unsolvable
+      // Check if this board state (or any symmetric equivalent) has been flagged as unsolvable
     {
-        QMutexLocker locker(&failedStatesMutex);
-        if (failedBoardStates.contains(boardStateId)) {
+        QMutexLocker locker(&StrategyWorker::failedStatesMutex);
+        if (StrategyWorker::failedBoardStates.contains(boardStateId)) {
             return false; // This board state or a symmetric equivalent leads to no solution
         }
     }
@@ -361,8 +419,8 @@ bool BoardController::solveBoard(Board* board)
     QVector<Move> moves = board->getValidMoves();
     if (moves.isEmpty()) {
         // No moves available and not in winning state - flag this state as failed
-        QMutexLocker locker(&failedStatesMutex);
-        failedBoardStates.insert(boardStateId);
+        QMutexLocker locker(&StrategyWorker::failedStatesMutex);
+        StrategyWorker::failedBoardStates.insert(boardStateId);
         return false;
     }
 
@@ -379,12 +437,10 @@ bool BoardController::solveBoard(Board* board)
             // Undo the move and try next
             board->undoLastMove();
         }
-    }
-
-    // No solution found from this state - flag it as failed
+    }    // No solution found from this state - flag it as failed
     {
-        QMutexLocker locker(&failedStatesMutex);
-        failedBoardStates.insert(boardStateId);
+        QMutexLocker locker(&StrategyWorker::failedStatesMutex);
+        StrategyWorker::failedBoardStates.insert(boardStateId);
     }
     
     return false;
@@ -651,4 +707,71 @@ Position BoardController::findNearestPegInDirection(int direction)
     }
 
     return bestPeg;
+}
+
+void BoardController::onStrategyComputed(const Move &move, bool isDeadGame)
+{
+    qDebug() << "BoardController: Strategy computation completed";
+    
+    // Stop the loading animation
+    if (loadingCircle) {
+        loadingCircle->stopAnimation();
+    }
+    
+    isComputingStrategy = false;
+    
+    if (isDeadGame) {
+        qDebug() << "BoardController: Dead game detected by strategy worker";
+        emit informationUpdated("💀 Dead game detected!\nNo winning moves available.\nThe current board state cannot be won.");
+        emit deadGameDetected();
+    } else if (move.from.row != -1) {
+        qDebug() << "BoardController: Suggesting winning move from (" << move.from.row << "," << move.from.col 
+                 << ") to (" << move.to.row << "," << move.to.col << ")";
+        emit informationUpdated(QString("✨ Winning move found!\nFrom (%1,%2) to (%3,%4)\nThis move guarantees victory!")
+                              .arg(move.from.row).arg(move.from.col)
+                              .arg(move.to.row).arg(move.to.col));
+        
+        // Clear current selection and highlight suggested move
+        clearSelection();
+        selectedPosition = move.from;
+        hasPegSelected = true;
+        currentValidMoves.clear();
+        currentValidMoves.append(move);
+        
+        emit highlightMovesSignal(currentValidMoves);
+    } else {
+        qDebug() << "BoardController: No winning moves found by strategy worker";
+        emit informationUpdated("🤔 No guaranteed winning moves found!\nThe current position is too complex\nor may not have a perfect solution.");
+    }
+}
+
+void BoardController::onStrategyComputationCancelled()
+{
+    qDebug() << "BoardController: Strategy computation was cancelled";
+    
+    // Stop the loading animation
+    if (loadingCircle) {
+        loadingCircle->stopAnimation();
+    }
+    
+    isComputingStrategy = false;
+    
+    emit informationUpdated("Strategy computation cancelled.\nYou can try again by pressing space.");
+}
+
+void BoardController::onBoardViewResized()
+{
+    // Resize the loading circle to match the new board view size
+    if (loadingCircle && boardView) {
+        loadingCircle->resize(boardView->size());
+        qDebug() << "BoardController: Loading circle resized to match board view size:" << boardView->size();
+    }
+}
+
+void BoardController::clearFailedStatesCache()
+{
+    // Clear the StrategyWorker's failed states cache
+    QMutexLocker locker(&StrategyWorker::failedStatesMutex);
+    StrategyWorker::failedBoardStates.clear();
+    qDebug() << "BoardController: Failed board states cache cleared";
 }

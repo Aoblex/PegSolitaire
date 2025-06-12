@@ -7,6 +7,8 @@
 #include <QMutex>   // Added for thread safety
 #include "models/Board.h"
 #include "views/BoardView.h"
+#include "views/LoadingCircle.h"
+#include "controllers/StrategyWorker.h"
 
 /**
  * @brief Controller for managing the Peg Solitaire game board interactions
@@ -110,6 +112,23 @@ public slots:
      */
     void onMoveRequested(int direction);
 
+private slots:
+    /**
+     * @brief Handle completion of strategy computation
+     * @param move The computed move
+     * @param isDeadGame Whether the game is unwinnable
+     */
+    void onStrategyComputed(const Move &move, bool isDeadGame);
+      /**
+     * @brief Handle cancellation of strategy computation
+     */
+    void onStrategyComputationCancelled();
+    
+    /**
+     * @brief Handle board view resize events
+     */
+    void onBoardViewResized();
+
 private:
     Board *boardModel;
     BoardView *boardView;
@@ -118,6 +137,13 @@ private:
     bool hasPegSelected;
     QList<Move> currentValidMoves;
     
+    // Loading circle for strategy computation
+    LoadingCircle *loadingCircle;
+    
+    // Strategy worker thread
+    StrategyWorker *strategyWorker;
+    bool isComputingStrategy;
+
     /**
      * @brief Update the view to reflect current board state
      */
@@ -184,9 +210,7 @@ private:
      * @brief Find the best strategic move using minimax-like approach
      * @return Best move that leads to winning, or invalid move if none exists
      */
-    Move findBestStrategicMove();
-    
-    /**
+    Move findBestStrategicMove();    /**
      * @brief Clear the failed board states cache for optimization
      * This should be called when starting a new game or changing board types
      */
@@ -194,10 +218,6 @@ private:
 
     // Keyboard navigation state
     Position currentKeyboardPosition;
-    
-    // Static set for symmetry optimization - shared across all instances
-    static QSet<quint64> failedBoardStates;
-    static QMutex failedStatesMutex;
 };
 
 #endif // BOARDCONTROLLER_H
