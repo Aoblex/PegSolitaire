@@ -53,7 +53,9 @@ jobs:
           -G "Ninja"
 
     - name: Build
-      run: cmake --build build --parallel    - name: Test executable
+      run: cmake --build build --parallel
+
+    - name: Test executable
       run: |
         if (Test-Path "build\PegSolitaire.exe") {
           Write-Host "✅ PegSolitaire.exe built successfully"
