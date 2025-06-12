@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <QShowEvent>
 #include <QList>
 #include "models/Board.h"
 
@@ -91,7 +92,15 @@ protected:
     /**
      * @brief Handle key press events (e.g., spacebar for suggest move)
      */
-    void keyPressEvent(QKeyEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;    /**
+     * @brief Handle resize events to recalculate board dimensions
+     */
+    void resizeEvent(QResizeEvent *event) override;
+
+    /**
+     * @brief Handle show events to recalculate board dimensions
+     */
+    void showEvent(QShowEvent *event) override;
 
 private slots:
     /**
@@ -128,11 +137,10 @@ private:
     // Board data
     Board *boardModel;
     QList<Move> highlightedMoves;
-    
-    // Visual properties
-    static const int CELL_SIZE = 40;
-    static const int PEG_RADIUS = 15;
-    static const int BOARD_MARGIN = 20;
+      // Visual properties - now dynamic
+    int cellSize;
+    int pegRadius;
+    int boardMargin;
     
     // Colors
     QColor pegColor;
@@ -180,12 +188,16 @@ private:
      * @param screenPos Screen coordinates
      */
     void drawCell(QPainter &painter, const Position &pos, const QPoint &screenPos);
-    
-    /**
+      /**
      * @brief Calculate the board widget size based on board dimensions
      * @return Recommended size for the board widget
      */
     QSize calculateBoardSize();
+    
+    /**
+     * @brief Calculate optimal cell size based on available space
+     */
+    void calculateDynamicSizes();
 };
 
 #endif // BOARDVIEW_H

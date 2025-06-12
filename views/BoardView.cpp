@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <QFont>
 #include <QSizePolicy>
+#include <QtCore/qmath.h>
+#include <QTimer>
 
 BoardView::BoardView(QWidget *parent)
     : QWidget(parent),
@@ -18,7 +20,10 @@ BoardView::BoardView(QWidget *parent)
       homeButton(nullptr),
       pegCountLabel(nullptr),
       instructionLabel(nullptr),
-      boardModel(nullptr)
+      boardModel(nullptr),
+      cellSize(40),
+      pegRadius(15),
+      boardMargin(20)
 {
     setupColors();
     setupUI();
@@ -44,8 +49,8 @@ void BoardView::setupColors()
 void BoardView::setupUI()
 {
     mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(10);
-    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(5);
+    mainLayout->setContentsMargins(5, 5, 5, 5);
 
     // Info layout for peg count and instructions
     infoLayout = new QHBoxLayout();
@@ -67,11 +72,13 @@ void BoardView::setupUI()
     
     mainLayout->addLayout(infoLayout);
 
-    // Board widget - this will be where we draw the board
+    // Board widget - this will expand to fill available space
     boardWidget = new QWidget(this);
-    boardWidget->setMinimumSize(400, 400);
     boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    mainLayout->addWidget(boardWidget, 1, Qt::AlignCenter); // Give most space to the board    // Control buttons layout
+    boardWidget->setMinimumSize(200, 200);  // Ensure minimum usable size
+    mainLayout->addWidget(boardWidget, 1); // Give most space to the board
+
+    // Control buttons layout
     controlLayout = new QHBoxLayout();
     
     undoButton = new QPushButton("Undo", this);
@@ -96,19 +103,18 @@ void BoardView::setupUI()
     connect(homeButton, &QPushButton::clicked, this, &BoardView::onHomeButtonClicked);
 
     setLayout(mainLayout);
+    
+    // Set size policy for the main widget to expand
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 void BoardView::setBoard(Board *board)
 {
     boardModel = board;
     if (boardModel) {
+        calculateDynamicSizes();
         updateView();
         updatePegCount(boardModel->getPegCount());
-        
-        // Resize the widget based on board size
-        QSize boardSize = calculateBoardSize();
-        boardWidget->setMinimumSize(boardSize);
-        setMinimumSize(boardSize.width() + 40, boardSize.height() + 150); // Extra space for controls
     }
 }
 
@@ -196,6 +202,30 @@ void BoardView::keyPressEvent(QKeyEvent *event)
     }
 }
 
+void BoardView::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (boardModel) {
+        // Small delay to ensure geometry is updated
+        QTimer::singleShot(0, this, [this]() {
+            calculateDynamicSizes();
+            updateView();
+        });
+    }
+}
+
+void BoardView::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    if (boardModel) {
+        // Recalculate sizes when widget becomes visible
+        QTimer::singleShot(0, this, [this]() {
+            calculateDynamicSizes();
+            updateView();
+        });
+    }
+}
+
 void BoardView::onUndoButtonClicked()
 {
     emit undoClicked();
@@ -224,8 +254,8 @@ Position BoardView::getBoardPosition(const QPoint &point)
     int relativeY = point.y() - boardRect.top();
     
     // Convert to board coordinates
-    int col = (relativeX - BOARD_MARGIN) / CELL_SIZE;
-    int row = (relativeY - BOARD_MARGIN) / CELL_SIZE;
+    int col = (relativeX - boardMargin) / cellSize;
+    int row = (relativeY - boardMargin) / cellSize;
     
     return Position(row, col);
 }
@@ -238,8 +268,8 @@ QPoint BoardView::getScreenPosition(const Position &pos)
 
     QRect boardRect = boardWidget->geometry();
     
-    int x = boardRect.left() + BOARD_MARGIN + pos.col * CELL_SIZE + CELL_SIZE / 2;
-    int y = boardRect.top() + BOARD_MARGIN + pos.row * CELL_SIZE + CELL_SIZE / 2;
+    int x = boardRect.left() + boardMargin + pos.col * cellSize + cellSize / 2;
+    int y = boardRect.top() + boardMargin + pos.row * cellSize + cellSize / 2;
     
     return QPoint(x, y);
 }
@@ -287,36 +317,36 @@ void BoardView::drawCell(QPainter &painter, const Position &pos, const QPoint &s
     // Draw the cell background (for grid appearance)
     painter.setPen(QPen(Qt::black, 1));
     painter.setBrush(QBrush(boardBackgroundColor));
-    QRect cellRect(screenPos.x() - CELL_SIZE/2, screenPos.y() - CELL_SIZE/2, CELL_SIZE, CELL_SIZE);
+    QRect cellRect(screenPos.x() - cellSize/2, screenPos.y() - cellSize/2, cellSize, cellSize);
     painter.drawRect(cellRect);
 
     if (state == PegState::Peg) {
         // Draw peg as a filled circle
         painter.setPen(QPen(Qt::black, 2));
         painter.setBrush(QBrush(cellColor));
-        painter.drawEllipse(screenPos, PEG_RADIUS, PEG_RADIUS);
+        painter.drawEllipse(screenPos, pegRadius, pegRadius);
         
         // Add some shading for 3D effect
         painter.setPen(QPen(Qt::white, 1));
-        painter.drawArc(screenPos.x() - PEG_RADIUS/2, screenPos.y() - PEG_RADIUS/2, 
-                       PEG_RADIUS, PEG_RADIUS, 45 * 16, 90 * 16);
+        painter.drawArc(screenPos.x() - pegRadius/2, screenPos.y() - pegRadius/2, 
+                       pegRadius, pegRadius, 45 * 16, 90 * 16);
     } else if (state == PegState::Empty) {
         // Draw empty hole as a circle outline
         painter.setPen(QPen(Qt::black, 2));
         painter.setBrush(QBrush(cellColor));
-        painter.drawEllipse(screenPos, PEG_RADIUS, PEG_RADIUS);
+        painter.drawEllipse(screenPos, pegRadius, pegRadius);
         
         // Draw inner shadow for hole effect
         painter.setPen(QPen(Qt::darkGray, 1));
         painter.setBrush(Qt::NoBrush);
-        painter.drawEllipse(screenPos, PEG_RADIUS - 2, PEG_RADIUS - 2);
+        painter.drawEllipse(screenPos, pegRadius - 2, pegRadius - 2);
     }
 
     // Draw highlight border if needed
     if (highlighted) {
         painter.setPen(QPen(highlightColor, 3));
         painter.setBrush(Qt::NoBrush);
-        painter.drawEllipse(screenPos, PEG_RADIUS + 4, PEG_RADIUS + 4);
+        painter.drawEllipse(screenPos, pegRadius + 4, pegRadius + 4);
     }
 }
 
@@ -329,8 +359,61 @@ QSize BoardView::calculateBoardSize()
     int rows = boardModel->getRows();
     int cols = boardModel->getCols();
     
-    int width = cols * CELL_SIZE + 2 * BOARD_MARGIN;
-    int height = rows * CELL_SIZE + 2 * BOARD_MARGIN;
+    int width = cols * cellSize + 2 * boardMargin;
+    int height = rows * cellSize + 2 * boardMargin;
     
     return QSize(width, height);
+}
+
+void BoardView::calculateDynamicSizes()
+{
+    if (!boardModel || !boardWidget) {
+        return;
+    }
+
+    // Get available space for the board widget
+    QRect availableSpace = boardWidget->geometry();
+    
+    // If board widget geometry is not set or too small, use parent size
+    if (availableSpace.width() <= 0 || availableSpace.height() <= 0) {
+        availableSpace = rect();
+        // Reserve space for controls and info labels (approximately 120px)
+        int reservedHeight = 120;
+        if (availableSpace.height() > reservedHeight) {
+            availableSpace.setHeight(availableSpace.height() - reservedHeight);
+        }
+        // Add some margin
+        availableSpace.adjust(10, 10, -10, -10);
+    }
+
+    int rows = boardModel->getRows();
+    int cols = boardModel->getCols();
+    
+    if (rows <= 0 || cols <= 0) {
+        return;
+    }
+
+    // Start with default margin
+    int tempMargin = 20;
+    
+    // Calculate maximum cell size that fits in available space
+    int maxCellWidth = (availableSpace.width() - 2 * tempMargin) / cols;
+    int maxCellHeight = (availableSpace.height() - 2 * tempMargin) / rows;
+    
+    // Use the smaller dimension to ensure the board fits (maintain aspect ratio)
+    cellSize = qMin(maxCellWidth, maxCellHeight);
+    
+    // Set reasonable bounds for cell size
+    cellSize = qMax(cellSize, 15);  // Minimum size for usability
+    cellSize = qMin(cellSize, 100); // Maximum size to prevent oversized board
+    
+    // Calculate peg radius based on cell size (about 60-70% of cell size)
+    pegRadius = static_cast<int>(cellSize * 0.3);
+    pegRadius = qMax(pegRadius, 6);   // Minimum peg size
+    pegRadius = qMin(pegRadius, 35);  // Maximum peg size
+    
+    // Adjust board margin based on cell size
+    boardMargin = static_cast<int>(cellSize * 0.4);
+    boardMargin = qMax(boardMargin, 8);   // Minimum margin
+    boardMargin = qMin(boardMargin, 50);  // Maximum margin
 }
