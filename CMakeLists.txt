@@ -43,6 +43,7 @@ set(PROJECT_SOURCES
         controllers/StrategyWorker.h
         utils/ButtonStyles.cpp
         utils/ButtonStyles.h
+        resources/resources.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

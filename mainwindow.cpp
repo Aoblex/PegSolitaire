@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QStackedWidget>
 #include <QDebug>                   // For logging
+#include <QIcon>                    // For window icon
 #include "models/Board.h"           // For creating board instances
 
 MainWindow::MainWindow(QWidget *parent)
@@ -20,7 +21,14 @@ MainWindow::MainWindow(QWidget *parent)
     stackedWidget->addWidget(settingsPageView);
     stackedWidget->addWidget(gameView); // Add gameView to stackedWidget
 
-    setCentralWidget(stackedWidget);    // Connect signals for navigation
+    setCentralWidget(stackedWidget);
+
+    // Set window properties
+    setWindowTitle("Peg Solitaire");
+    setWindowIcon(QIcon(":/icon.svg"));
+    
+    // Set minimum window size for better usability
+    setMinimumSize(800, 600);    // Connect signals for navigation
     connect(homePageController, &HomePageController::startClicked, this, &MainWindow::showStartPage);
     connect(homePageController, &HomePageController::settingsClicked, this, &MainWindow::showSettingsPage);
     connect(startPageController, &StartPageController::navigateToHome, this, &MainWindow::showHomePage);
