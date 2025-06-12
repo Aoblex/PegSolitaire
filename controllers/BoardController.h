@@ -176,11 +176,9 @@ private:
     /**
      * @brief Solve the board using symmetry-optimized recursive backtracking
      * @param board Pointer to board to solve
-     * @param depth Current recursion depth for optimization
-     * @param maxDepth Maximum recursion depth to prevent timeout
      * @return True if a solution exists from this state
      */
-    bool solveBoard(Board* board, int depth = 0, int maxDepth = 20);
+    bool solveBoard(Board* board);
     
     /**
      * @brief Find the best strategic move using minimax-like approach

@@ -329,13 +329,13 @@ bool BoardController::isBoardSolvable()
         }
     }
 
-    bool solvable = solveBoard(testBoard, 0, 10); // Limit depth to prevent timeout
+    bool solvable = solveBoard(testBoard);
     
     testBoard->deleteLater();
     return solvable;
 }
 
-bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
+bool BoardController::solveBoard(Board* board)
 {
     if (!board) {
         return false;
@@ -344,11 +344,6 @@ bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
     // Check win condition - if only 1 peg left and it's at the center
     if (board->isWinningState()) {
         return true;
-    }
-
-    // Check if we've reached maximum depth
-    if (depth >= maxDepth) {
-        return false;
     }
 
     // Get unique board state identifier
@@ -376,7 +371,7 @@ bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
         // Make the move
         if (board->performMove(move)) {
             // Recursively check if this leads to a solution
-            if (solveBoard(board, depth + 1, maxDepth)) {
+            if (solveBoard(board)) {
                 // Found a solution! Undo the move before returning
                 board->undoLastMove();
                 return true;
@@ -424,7 +419,7 @@ Move BoardController::findBestStrategicMove()
         // Try this move
         if (testBoard->performMove(move)) {
             // Check if this state is still solvable
-            if (solveBoard(testBoard, 0, 12)) { // Reduced depth for performance
+            if (solveBoard(testBoard)) {
                 winningMoves.append(move);
             }
         }
