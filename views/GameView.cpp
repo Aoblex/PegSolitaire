@@ -6,6 +6,8 @@
 #include <QMessageBox>
 #include <QResizeEvent>
 #include <QTimer>
+#include <QScrollArea>
+#include <QFrame>
 
 GameView::GameView(QWidget *parent)
     : QWidget(parent),
@@ -193,6 +195,7 @@ void GameView::showGuideDialog()
 {
     // If overlay already exists, just show it
     if (guideOverlay) {
+        guideOverlay->setGeometry(0, 0, this->width(), this->height());
         guideOverlay->show();
         guideOverlay->raise();
         return;
@@ -206,9 +209,10 @@ void GameView::showGuideDialog()
         "}"
     );
     
-    // Create the content widget
+    // Create the content widget with flexible sizing
     QWidget *contentWidget = new QWidget(guideOverlay);
-    contentWidget->setFixedSize(500, 400);
+    contentWidget->setMaximumSize(600, 500);
+    contentWidget->setMinimumSize(400, 300);
     contentWidget->setStyleSheet(
         "QWidget {"
         "background-color: #f8f9fa;"
@@ -256,14 +260,42 @@ void GameView::showGuideDialog()
         "QPushButton:pressed {"
         "background-color: #a93226;"
         "}"
-    );
-    topLayout->addWidget(closeButton);
+    );    topLayout->addWidget(closeButton);
     contentLayout->addLayout(topLayout);
     
-    // Add guide content
-    QLabel *guideContent = new QLabel(contentWidget);
+    // Create scroll area for guide content
+    QScrollArea *scrollArea = new QScrollArea(contentWidget);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameStyle(QFrame::NoFrame);
+    scrollArea->setStyleSheet(
+        "QScrollArea {"
+        "background: transparent;"
+        "border: none;"
+        "}"
+        "QScrollBar:vertical {"
+        "background: #f1f1f1;"
+        "width: 12px;"
+        "border-radius: 6px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "background: #c1c1c1;"
+        "border-radius: 6px;"
+        "min-height: 20px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "background: #a8a8a8;"
+        "}"
+    );
+    
+    // Add guide content in a widget inside scroll area
+    QWidget *scrollWidget = new QWidget();
+    QVBoxLayout *scrollLayout = new QVBoxLayout(scrollWidget);
+    scrollLayout->setContentsMargins(5, 5, 5, 5);
+    
+    QLabel *guideContent = new QLabel(scrollWidget);
     guideContent->setWordWrap(true);
-    guideContent->setAlignment(Qt::AlignTop | Qt::AlignLeft);    guideContent->setText(
+    guideContent->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    guideContent->setText(
         "<p><b>Goal:</b> Remove all but one peg from the board.</p>"
         "<p><b>How to play:</b></p>"
         "<p>• Jump one peg over another into an empty hole. The peg that is jumped over is removed.</p>"
@@ -291,7 +323,11 @@ void GameView::showGuideDialog()
         "}"
     );
     
-    contentLayout->addWidget(guideContent);
+    scrollLayout->addWidget(guideContent);
+    scrollLayout->addStretch();
+    scrollArea->setWidget(scrollWidget);
+    
+    contentLayout->addWidget(scrollArea);
     
     // Position content widget in center of overlay
     QVBoxLayout *overlayLayout = new QVBoxLayout(guideOverlay);
@@ -305,8 +341,7 @@ void GameView::showGuideDialog()
     
     overlayLayout->addLayout(centerLayout);
     overlayLayout->addStretch();
-    
-    // Connect close button to hide overlay
+      // Connect close button to hide overlay
     connect(closeButton, &QPushButton::clicked, [this]() {
         if (guideOverlay) {
             guideOverlay->hide();
@@ -314,7 +349,7 @@ void GameView::showGuideDialog()
     });
     
     // Make overlay fill the entire GameView
-    guideOverlay->resize(this->size());
+    guideOverlay->setGeometry(0, 0, this->width(), this->height());
     
     // Show the overlay
     guideOverlay->show();
@@ -327,10 +362,10 @@ void GameView::resizeEvent(QResizeEvent *event)
     
     // Resize the overlays to match the new size
     if (guideOverlay && guideOverlay->isVisible()) {
-        guideOverlay->resize(this->size());
+        guideOverlay->setGeometry(0, 0, this->width(), this->height());
     }
     if (gameResultOverlay && gameResultOverlay->isVisible()) {
-        gameResultOverlay->resize(this->size());
+        gameResultOverlay->setGeometry(0, 0, this->width(), this->height());
     }
 }
 
@@ -520,9 +555,8 @@ void GameView::showGameResultOverlay(bool isWin, int pegCount)
         // Navigate to home
         emit navigateToHome();
     });
-    
-    // Make overlay fill the entire GameView
-    gameResultOverlay->resize(this->size());
+      // Make overlay fill the entire GameView
+    gameResultOverlay->setGeometry(0, 0, this->width(), this->height());
     
     // Show the overlay
     gameResultOverlay->show();
