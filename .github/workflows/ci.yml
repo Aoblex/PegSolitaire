@@ -32,27 +32,32 @@ jobs:
         target: desktop
         arch: win64_msvc2019_64
         cache: true
-    - name: Setup CMake
+    - name: Setup CMake and Ninja
       uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.28.x'
+
+    - name: Setup Ninja
+      uses: seanmiddleditch/gha-setup-ninja@master
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
 
     - name: Configure CMake
       run: |
         cmake -B build -S . `
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
           -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" `
-          -G "Visual Studio 17 2022" `
-          -A x64
+          -G "Ninja"
 
     - name: Build
-      run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
-
-    - name: Test executable
+      run: cmake --build build --parallel    - name: Test executable
       run: |
-        if (Test-Path "build\${{ env.BUILD_TYPE }}\PegSolitaire.exe") {
+        if (Test-Path "build\PegSolitaire.exe") {
           Write-Host "✅ PegSolitaire.exe built successfully"
-          $fileInfo = Get-Item "build\${{ env.BUILD_TYPE }}\PegSolitaire.exe"
+          $fileInfo = Get-Item "build\PegSolitaire.exe"
           Write-Host "File size: $($fileInfo.Length) bytes"
           Write-Host "Last modified: $($fileInfo.LastWriteTime)"
         } else {
