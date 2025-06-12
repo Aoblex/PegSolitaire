@@ -151,8 +151,7 @@ void BoardView::keyPressEvent(QKeyEvent *event)
         emit pegSelectionRequested(3); // Right
         return;
     }
-    
-    // Handle arrow keys for move execution (0=up, 1=left, 2=down, 3=right)
+      // Handle arrow keys for move execution (0=up, 1=left, 2=down, 3=right)
     if (key == Qt::Key_Up) {
         emit moveRequested(0); // Up
         return;
@@ -164,6 +163,18 @@ void BoardView::keyPressEvent(QKeyEvent *event)
         return;
     } else if (key == Qt::Key_Right) {
         emit moveRequested(3); // Right
+        return;
+    }
+    
+    // Handle 'b' key for undo
+    if (key == Qt::Key_B) {
+        emit undoClicked();
+        return;
+    }
+    
+    // Handle 'r' key for reset
+    if (key == Qt::Key_R) {
+        emit resetClicked();
         return;
     }
     

@@ -277,6 +277,8 @@ void GameView::showGuideDialog()
         "<p>• <b>W/A/S/D:</b> Select peg in the corresponding direction</p>"
         "<p>• <b>Arrow Keys:</b> Move selected peg in the corresponding direction</p>"
         "<p>• <b>Spacebar:</b> Get a suggested move</p>"
+        "<p>• <b>B:</b> Undo last move</p>"
+        "<p>• <b>R:</b> Reset the board</p>"
         "<p><b>Tip:</b> Try to work towards the center of the board!</p>"
     );
     guideContent->setStyleSheet(
