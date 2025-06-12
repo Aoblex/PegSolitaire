@@ -133,6 +133,7 @@ void Board::setupSquare()
 
 void Board::setupAntiPeg() 
 {
+    rows = 7, cols = 7;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
