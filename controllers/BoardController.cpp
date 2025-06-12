@@ -1,5 +1,10 @@
 #include "BoardController.h"
 #include <QDebug>
+#include <QMutexLocker>
+
+// Static member definitions for symmetry optimization
+QSet<quint64> BoardController::failedBoardStates;
+QMutex BoardController::failedStatesMutex;
 
 BoardController::BoardController(QObject *parent)
     : QObject(parent),
@@ -336,7 +341,7 @@ bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
         return false;
     }
 
-    // Check win condition using the new isWinningState method
+    // Check win condition - if only 1 peg left and it's at the center
     if (board->isWinningState()) {
         return true;
     }
@@ -346,10 +351,24 @@ bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
         return false;
     }
 
+    // Get unique board state identifier
+    quint64 boardStateId = board->getBoardStateId();
+    
+    // Check if this board state (or any symmetric equivalent) has been flagged as unsolvable
+    {
+        QMutexLocker locker(&failedStatesMutex);
+        if (failedBoardStates.contains(boardStateId)) {
+            return false; // This board state or a symmetric equivalent leads to no solution
+        }
+    }
+
     // Get all possible moves
     QVector<Move> moves = board->getValidMoves();
     if (moves.isEmpty()) {
-        return false; // No moves available and not in winning state
+        // No moves available and not in winning state - flag this state as failed
+        QMutexLocker locker(&failedStatesMutex);
+        failedBoardStates.insert(boardStateId);
+        return false;
     }
 
     // Try each move recursively
@@ -358,7 +377,7 @@ bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
         if (board->performMove(move)) {
             // Recursively check if this leads to a solution
             if (solveBoard(board, depth + 1, maxDepth)) {
-                // Undo the move before returning
+                // Found a solution! Undo the move before returning
                 board->undoLastMove();
                 return true;
             }
@@ -367,7 +386,13 @@ bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
         }
     }
 
-    return false; // No solution found from this state
+    // No solution found from this state - flag it as failed
+    {
+        QMutexLocker locker(&failedStatesMutex);
+        failedBoardStates.insert(boardStateId);
+    }
+    
+    return false;
 }
 
 Move BoardController::findBestStrategicMove()

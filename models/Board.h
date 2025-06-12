@@ -5,6 +5,8 @@
 #include <QVector> // Added for QVector
 #include <QPair>   // Added for QPair (used in Position)
 #include <QObject> // Added for QObject inheritance
+#include <QSet>    // Added for symmetry optimization
+#include <QMutex>  // Added for thread safety
 
 // Enum to represent the type of board
 enum class BoardType
@@ -96,6 +98,18 @@ public:
      * @return True if the board is in a winning state
      */
     bool isWinningState() const;
+    
+    /**
+     * @brief Get unique identifier for current board state based on symmetries
+     * @return 64-bit unique identifier representing this board state
+     */
+    quint64 getBoardStateId() const;
+    
+    /**
+     * @brief Get all 8 symmetric variations of the board state as unique IDs
+     * @return Vector of 8 unique identifiers for all symmetrical variants
+     */
+    QVector<quint64> getAllSymmetricStateIds() const;
 
 private:
     // Board setup methods
@@ -108,6 +122,23 @@ private:
     static constexpr int cols = 7;
     int pegCount;
     Position startingPosition; // The position where the game started (empty for normal, peg for anti-peg)
+
+    /**
+     * @brief Convert board state to bit string in specified traversal order
+     * @param rotations Number of 90-degree rotations (0-3)
+     * @param flip Whether to flip horizontally before rotation
+     * @return 64-bit representation of board state
+     */
+    quint64 boardToBits(int rotations, bool flip) const;
+    
+    /**
+     * @brief Get position after applying transformations
+     * @param pos Original position
+     * @param rotations Number of 90-degree rotations (0-3)
+     * @param flip Whether to flip horizontally before rotation
+     * @return Transformed position
+     */
+    Position getTransformedPosition(const Position& pos, int rotations, bool flip) const;
 
 protected:
     BoardType currentBoardType;

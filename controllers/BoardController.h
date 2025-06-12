@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QList>
+#include <QSet>     // Added for symmetry optimization
+#include <QMutex>   // Added for thread safety
 #include "models/Board.h"
 #include "views/BoardView.h"
 
@@ -172,7 +174,7 @@ private:
     bool isBoardSolvable();
     
     /**
-     * @brief Solve the board using recursive backtracking to find winning path
+     * @brief Solve the board using symmetry-optimized recursive backtracking
      * @param board Pointer to board to solve
      * @param depth Current recursion depth for optimization
      * @param maxDepth Maximum recursion depth to prevent timeout
@@ -185,9 +187,19 @@ private:
      * @return Best move that leads to winning, or invalid move if none exists
      */
     Move findBestStrategicMove();
+    
+    /**
+     * @brief Clear the failed board states cache for optimization
+     * This should be called when starting a new game or changing board types
+     */
+    static void clearFailedStatesCache();
 
     // Keyboard navigation state
     Position currentKeyboardPosition;
+    
+    // Static set for symmetry optimization - shared across all instances
+    static QSet<quint64> failedBoardStates;
+    static QMutex failedStatesMutex;
 };
 
 #endif // BOARDCONTROLLER_H

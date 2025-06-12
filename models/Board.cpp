@@ -306,3 +306,80 @@ bool Board::isWinningState() const
         return (getPegState(startingPosition) == PegState::Peg);
     }
 }
+
+quint64 Board::getBoardStateId() const
+{
+    QVector<quint64> allIds = getAllSymmetricStateIds();
+    
+    // Return the minimum ID as the canonical representation
+    quint64 minId = allIds[0];
+    for (const quint64& id : allIds) {
+        if (id < minId) {
+            minId = id;
+        }
+    }
+    
+    return minId;
+}
+
+QVector<quint64> Board::getAllSymmetricStateIds() const
+{
+    QVector<quint64> ids;
+    ids.reserve(8);
+    
+    // Generate all 8 symmetric variations:
+    // 4 rotations (0°, 90°, 180°, 270°) × 2 (original and flipped)
+    for (int flip = 0; flip < 2; ++flip) {
+        for (int rotation = 0; rotation < 4; ++rotation) {
+            ids.append(boardToBits(rotation, flip == 1));
+        }
+    }
+    
+    return ids;
+}
+
+quint64 Board::boardToBits(int rotations, bool flip) const
+{
+    quint64 result = 0;
+    int bitIndex = 0;
+    
+    // Traverse the board in row-major order, applying transformations
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            Position originalPos(r, c);
+            Position transformedPos = getTransformedPosition(originalPos, rotations, flip);
+            
+            // Get the state at the transformed position
+            PegState state = getPegState(transformedPos);
+            
+            // Convert to bit: 1 for peg, 0 for empty/blocked
+            if (state == PegState::Peg) {
+                result |= (1ULL << bitIndex);
+            }
+            
+            bitIndex++;
+        }
+    }
+    
+    return result;
+}
+
+Position Board::getTransformedPosition(const Position& pos, int rotations, bool flip) const
+{
+    Position transformed = pos;
+    
+    // Apply horizontal flip first if needed
+    if (flip) {
+        transformed.col = cols - 1 - transformed.col;
+    }
+    
+    // Apply rotations (90-degree clockwise rotations)
+    for (int i = 0; i < rotations; ++i) {
+        int newRow = transformed.col;
+        int newCol = rows - 1 - transformed.row;
+        transformed.row = newRow;
+        transformed.col = newCol;
+    }
+    
+    return transformed;
+}
