@@ -60,11 +60,16 @@ signals:
      * @brief Emitted when user requests to navigate back to home
      */
     void navigateToHome();
-    
-    /**
+      /**
      * @brief Emitted when the game is determined to be unwinnable
      */
     void deadGameDetected();
+    
+    /**
+     * @brief Emitted when information about current operation needs to be displayed
+     * @param message Information message to display
+     */
+    void informationUpdated(const QString &message);
 
 public slots:
     /**

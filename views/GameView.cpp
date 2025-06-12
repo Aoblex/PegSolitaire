@@ -15,9 +15,10 @@ GameView::GameView(QWidget *parent)
       gameLayout(nullptr),
       rightSideLayout(nullptr),
       controlButtonsLayout(nullptr),
-      boardView(nullptr),
-      scoringBoardTitle(nullptr),
+      boardView(nullptr),      scoringBoardTitle(nullptr),
       pegCountLabel(nullptr),
+      informationBoardTitle(nullptr),
+      informationDisplay(nullptr),
       undoButton(nullptr),
       resetButton(nullptr),
       homeButton(nullptr),      guideButton(nullptr),
@@ -44,6 +45,8 @@ GameView::GameView(QWidget *parent)
             this, &GameView::navigateToHome);
     connect(boardController, &BoardController::gameOver,
             this, &GameView::onGameOver);
+    connect(boardController, &BoardController::informationUpdated,
+            this, &GameView::updateInformation);
     
     // Connect view signals to controller
     connect(boardView, &BoardView::undoClicked,
@@ -149,11 +152,47 @@ void GameView::setupUI()
         "background: #ffffff;"
         "border: 2px solid #27ae60;"
         "border-radius: 8px;"
-        "padding: 15px;"
-        "}"    );
+        "padding: 15px;"        "}"    );
+    
+    // Information board title
+    informationBoardTitle = new QLabel("Information", this);
+    QFont infoTitleFont = informationBoardTitle->font();
+    infoTitleFont.setPointSize(16);
+    infoTitleFont.setBold(true);
+    informationBoardTitle->setFont(infoTitleFont);
+    informationBoardTitle->setAlignment(Qt::AlignCenter);
+    informationBoardTitle->setStyleSheet(
+        "QLabel {"
+        "color: #2c3e50;"
+        "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ecf0f1, stop:1 #bdc3c7);"
+        "border: 2px solid #95a5a6;"
+        "border-radius: 8px;"
+        "padding: 10px;"
+        "}"
+    );
+    
+    // Information display
+    informationDisplay = new QLabel("Ready to play", this);
+    QFont infoFont = informationDisplay->font();
+    infoFont.setPointSize(12);
+    informationDisplay->setFont(infoFont);
+    informationDisplay->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    informationDisplay->setWordWrap(true);
+    informationDisplay->setStyleSheet(
+        "QLabel {"
+        "color: #2c3e50;"
+        "background: #ffffff;"
+        "border: 2px solid #3498db;"
+        "border-radius: 8px;"
+        "padding: 10px;"
+        "min-height: 100px;"
+        "}"
+    );
     
     rightSideLayout->addWidget(scoringBoardTitle);
     rightSideLayout->addWidget(pegCountLabel);
+    rightSideLayout->addWidget(informationBoardTitle);
+    rightSideLayout->addWidget(informationDisplay);
     rightSideLayout->addStretch(); // Push content to top
     
     gameLayout->addLayout(rightSideLayout, 1); // Give scoring board less space (25%)
@@ -167,6 +206,13 @@ void GameView::updatePegCount(int count)
 {
     if (pegCountLabel) {
         pegCountLabel->setText(QString("Pegs: %1").arg(count));
+    }
+}
+
+void GameView::updateInformation(const QString &message)
+{
+    if (informationDisplay) {
+        informationDisplay->setText(message);
     }
 }
 

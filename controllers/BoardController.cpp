@@ -56,12 +56,13 @@ void BoardController::onPegCellClicked(const Position &pos)
             hasPegSelected = true;
               // Get valid moves from this position
             currentValidMoves = getMovesFromPosition(pos);
-            
-            if (!currentValidMoves.isEmpty()) {
+              if (!currentValidMoves.isEmpty()) {
                 qDebug() << "BoardController: Selected peg at (" << pos.row << "," << pos.col << ") with" << currentValidMoves.size() << "possible moves";
+                emit informationUpdated(QString("Selected peg at (%1,%2)\n%3 possible moves").arg(pos.row).arg(pos.col).arg(currentValidMoves.size()));
                 emit highlightMovesSignal(currentValidMoves);
             } else {
                 qDebug() << "BoardController: Selected peg at (" << pos.row << "," << pos.col << ") with no valid moves";
+                emit informationUpdated(QString("Selected peg at (%1,%2)\nNo valid moves available").arg(pos.row).arg(pos.col));
                 // Still highlight the selected peg even if it has no valid moves
                 QList<Move> selectedPegHighlight;
                 // Create a dummy move just to highlight the selected peg
@@ -91,11 +92,14 @@ void BoardController::onPegCellClicked(const Position &pos)
                     break;
                 }
             }
-            
-            if (moveFound && boardModel->performMove(attemptedMove)) {
+              if (moveFound && boardModel->performMove(attemptedMove)) {
                 qDebug() << "BoardController: Move performed from (" << attemptedMove.from.row << "," << attemptedMove.from.col 
                          << ") to (" << attemptedMove.to.row << "," << attemptedMove.to.col 
                          << ") jumping (" << attemptedMove.jumped.row << "," << attemptedMove.jumped.col << ")";
+                emit informationUpdated(QString("Move executed!\nFrom (%1,%2) to (%3,%4)\nJumped over (%5,%6)")
+                                      .arg(attemptedMove.from.row).arg(attemptedMove.from.col)
+                                      .arg(attemptedMove.to.row).arg(attemptedMove.to.col)
+                                      .arg(attemptedMove.jumped.row).arg(attemptedMove.jumped.col));
                 
                 clearSelection();
                 updateView();
@@ -104,6 +108,7 @@ void BoardController::onPegCellClicked(const Position &pos)
                 checkGameStatus();
             } else {
                 qDebug() << "BoardController: Invalid move attempted";
+                emit informationUpdated("Invalid move attempted!\nTry selecting a valid destination.");
             }
         } else {
             // Clicking on same peg - deselect
@@ -119,9 +124,9 @@ void BoardController::onUndoClicked()
     if (!boardModel) {
         return;
     }
-    
-    if (boardModel->undoLastMove()) {
+      if (boardModel->undoLastMove()) {
         qDebug() << "BoardController: Move undone successfully";
+        emit informationUpdated("Move undone successfully!\nReturned to previous state.");
         clearSelection();
         updateView();
         emit pegsRemainingChanged(boardModel->getPegCount());
@@ -129,6 +134,7 @@ void BoardController::onUndoClicked()
         checkGameStatus();
     } else {
         qDebug() << "BoardController: No moves to undo";
+        emit informationUpdated("No moves to undo!\nNo previous moves available.");
     }
 }
 
@@ -137,8 +143,8 @@ void BoardController::onResetClicked()
     if (!boardModel) {
         return;
     }
-    
-    qDebug() << "BoardController: Resetting board";
+      qDebug() << "BoardController: Resetting board";
+    emit informationUpdated("Board reset!\nGame restarted with fresh board.");
     
     // Re-initialize the board with its current type
     BoardType currentType = boardModel->getBoardType();
@@ -164,10 +170,12 @@ void BoardController::onSuggestMoveClicked()
     }
     
     Move suggestedMove = getSuggestedMove();
-    
-    if (suggestedMove.from.row != -1) {
+      if (suggestedMove.from.row != -1) {
         qDebug() << "BoardController: Suggesting winning move from (" << suggestedMove.from.row << "," << suggestedMove.from.col 
                  << ") to (" << suggestedMove.to.row << "," << suggestedMove.to.col << ")";
+        emit informationUpdated(QString("Suggested winning move:\nFrom (%1,%2) to (%3,%4)\nThis move guarantees victory!")
+                              .arg(suggestedMove.from.row).arg(suggestedMove.from.col)
+                              .arg(suggestedMove.to.row).arg(suggestedMove.to.col));
         
         // Clear current selection and highlight suggested move
         clearSelection();
@@ -179,6 +187,7 @@ void BoardController::onSuggestMoveClicked()
         emit highlightMovesSignal(currentValidMoves);
     } else {
         qDebug() << "BoardController: No winning moves available - dead game";
+        emit informationUpdated("No winning moves available!\nThis is a dead game state.\nNo path to victory exists.");
         // The deadGameDetected signal will be emitted by getStrategicMove()
     }
 }
@@ -226,19 +235,21 @@ void BoardController::checkGameStatus()
     
     int pegCount = boardModel->getPegCount();
     bool hasValidMoves = !boardModel->getValidMoves().isEmpty();
-    
     if (boardModel->isAntiPegMode()) {
         // Anti-peg mode: game ends when no more moves are available
         // Goal is to place as many pegs as possible
         if (!hasValidMoves) {
             qDebug() << "BoardController: Anti-peg game over! Final peg count:" << pegCount;
+            emit informationUpdated(QString("Anti-peg game complete!\nFinal peg count: %1\nNo more moves possible.").arg(pegCount));
             emit gameOver();
             return;
         }
-    } else {
+    }
+    else {
         // Normal mode: check for win condition (only 1 peg left) or lose condition
         if (pegCount == 1) {
             qDebug() << "BoardController: Player won! Only 1 peg remaining.";
+            emit informationUpdated("Congratulations!\nYou won the game!\nOnly 1 peg remaining!");
             emit gameOver();
             return;
         }
@@ -246,6 +257,7 @@ void BoardController::checkGameStatus()
         // Check for lose condition: no valid moves available (and more than 1 peg)
         if (!hasValidMoves && pegCount > 1) {
             qDebug() << "BoardController: Game over! No valid moves available. Final peg count:" << pegCount;
+            emit informationUpdated(QString("Game Over!\nNo valid moves available\n%1 pegs remaining").arg(pegCount));
             emit gameOver();
             return;
         }
@@ -384,9 +396,10 @@ Move BoardController::findBestStrategicMove()
                 winningMoves.append(move);
             }
         }
-        
-        testBoard->deleteLater();
-    }    // Return the first winning move found, or invalid move if none guarantee win
+          testBoard->deleteLater();
+    }
+    
+    // Return the first winning move found, or invalid move if none guarantee win
     if (!winningMoves.isEmpty()) {
         qDebug() << "BoardController: Found" << winningMoves.size() << "winning moves";
         return winningMoves.first();
@@ -403,20 +416,24 @@ void BoardController::onPegSelectionRequested(int direction)
     }
 
     Position targetPeg = findNearestPeg(direction);
-    
-    if (targetPeg.row != -1 && targetPeg.col != -1) {
+      if (targetPeg.row != -1 && targetPeg.col != -1) {
         // Select the found peg
         onPegCellClicked(targetPeg);
         qDebug() << "BoardController: Keyboard selected peg at (" << targetPeg.row << "," << targetPeg.col << ")";
+        QString directionName[] = {"Up", "Left", "Down", "Right"};
+        emit informationUpdated(QString("Keyboard navigation:\nSelected peg at (%1,%2)\nDirection: %3")
+                              .arg(targetPeg.row).arg(targetPeg.col).arg(directionName[direction]));
     } else {
         qDebug() << "BoardController: No peg found in direction" << direction;
+        QString directionName[] = {"Up", "Left", "Down", "Right"};
+        emit informationUpdated(QString("Keyboard navigation:\nNo peg found in %1 direction\nTry a different direction").arg(directionName[direction]));
     }
 }
 
 void BoardController::onMoveRequested(int direction)
-{
-    if (!boardModel || !hasPegSelected) {
+{    if (!boardModel || !hasPegSelected) {
         qDebug() << "BoardController: No peg selected for arrow key move";
+        emit informationUpdated("Arrow key move failed!\nPlease select a peg first\nusing WASD keys.");
         return;
     }
 
@@ -433,15 +450,20 @@ void BoardController::onMoveRequested(int direction)
     
     // Check if this move is valid among current valid moves
     for (const Move &move : currentValidMoves) {
-        if (move.to.row == targetPos.row && move.to.col == targetPos.col) {
-            // Valid move found, execute it
+        if (move.to.row == targetPos.row && move.to.col == targetPos.col) {            // Valid move found, execute it
             onPegCellClicked(targetPos);
             qDebug() << "BoardController: Executed arrow key move to (" << targetPos.row << "," << targetPos.col << ")";
+            QString directionName[] = {"Up", "Left", "Down", "Right"};
+            emit informationUpdated(QString("Arrow key move executed!\nDirection: %1\nMoved to (%2,%3)")
+                                  .arg(directionName[direction]).arg(targetPos.row).arg(targetPos.col));
             return;
         }
     }
     
     qDebug() << "BoardController: Invalid arrow key move attempted to (" << targetPos.row << "," << targetPos.col << ")";
+    QString directionName[] = {"Up", "Left", "Down", "Right"};
+    emit informationUpdated(QString("Invalid arrow key move!\nDirection: %1\nNo valid move to (%2,%3)")
+                          .arg(directionName[direction]).arg(targetPos.row).arg(targetPos.col));
 }
 
 Position BoardController::findNearestPeg(int direction)

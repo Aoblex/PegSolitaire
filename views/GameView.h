@@ -60,10 +60,13 @@ private:
     QHBoxLayout *controlButtonsLayout;
     
     // Board display
-    BoardView *boardView;
-      // Right side components
+    BoardView *boardView;    // Right side components
     QLabel *scoringBoardTitle;
     QLabel *pegCountLabel;
+    
+    // Information board components
+    QLabel *informationBoardTitle;
+    QLabel *informationDisplay;
       // Control buttons (upper right)
     QPushButton *undoButton;
     QPushButton *resetButton;
@@ -81,12 +84,17 @@ private:
     /**
      * @brief Setup the UI layout according to requirements
      */
-    void setupUI();
-      /**
+    void setupUI();    /**
      * @brief Update the peg count display
      * @param count Current number of pegs
      */
     void updatePegCount(int count);
+    
+    /**
+     * @brief Update the information display
+     * @param message Information message to display
+     */
+    void updateInformation(const QString &message);
       /**
      * @brief Show the guide information dialog
      */
