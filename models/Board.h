@@ -15,6 +15,7 @@ enum class BoardType
     Diamond,
     Square,
     AntiPeg,  // Anti-peg mode: start with one peg, fill the board
+    Endgame,  // Endgame mode: random but solvable endgame position
     // Add other board types here
 };
 
@@ -110,7 +111,8 @@ private:
     void setupEnglish();
     void setupDiamond();
     void setupSquare();
-    void setupAntiPeg();  // Anti-peg mode setup    // Board data
+    void setupAntiPeg();  // Anti-peg mode setup
+    void setupEndgame();  // Endgame mode setup// Board data
     QVector<QVector<PegState>> grid;
     int rows;
     int cols;

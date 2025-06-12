@@ -87,6 +87,9 @@ void MainWindow::startGame(BoardType boardType)
         case BoardType::AntiPeg:
             currentBoardModel = new Board(BoardType::AntiPeg, this);
             break;
+        case BoardType::Endgame:
+            currentBoardModel = new Board(BoardType::Endgame, this);
+            break;
         default:
             qDebug() << "Main window: Unknown or unsupported board type (enum):" << static_cast<int>(boardType);
             currentBoardModel = new Board(BoardType::English, this); // Fallback

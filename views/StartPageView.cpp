@@ -82,7 +82,7 @@ StartPageView::StartPageView(QWidget *parent)
     connect(specialAntiPegButton, &QPushButton::clicked, this, [this]()
             { emit gameModeSelected(BoardType::AntiPeg); });
     connect(specialEndgameButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::English); });
+            { emit gameModeSelected(BoardType::Endgame); });
 
     // Peg Duo Mode Button
     connect(pegDuoButton, &QPushButton::clicked, this, [this]()

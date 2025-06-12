@@ -35,6 +35,9 @@ void Board::initializeBoard(BoardType boardType)
         case BoardType::AntiPeg:
             setupAntiPeg();
             break;
+        case BoardType::Endgame:
+            setupEndgame();
+            break;
         default:
             qWarning() << "Unknown or unsupported board type:" << static_cast<int>(boardType);
             setupEnglish(); // Default fallback
