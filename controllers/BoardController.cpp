@@ -34,6 +34,11 @@ void BoardController::setBoardView(BoardView *view)
     }
 }
 
+Board* BoardController::getBoardModel() const
+{
+    return boardModel;
+}
+
 void BoardController::onPegCellClicked(const Position &pos)
 {
     if (!boardModel) {
@@ -214,9 +219,21 @@ void BoardController::checkGameStatus()
         return;
     }
     
-    if (boardModel->isGameOver()) {
-        qDebug() << "BoardController: Game over! Final peg count:" << boardModel->getPegCount();
+    int pegCount = boardModel->getPegCount();
+    bool hasValidMoves = !boardModel->getValidMoves().isEmpty();
+    
+    // Check for win condition: only 1 peg left
+    if (pegCount == 1) {
+        qDebug() << "BoardController: Player won! Only 1 peg remaining.";
         emit gameOver();
+        return;
+    }
+    
+    // Check for lose condition: no valid moves available (and more than 1 peg)
+    if (!hasValidMoves && pegCount > 1) {
+        qDebug() << "BoardController: Game over! No valid moves available. Final peg count:" << pegCount;
+        emit gameOver();
+        return;
     }
 }
 

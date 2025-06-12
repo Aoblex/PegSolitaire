@@ -17,9 +17,9 @@ GameView::GameView(QWidget *parent)
       pegCountLabel(nullptr),
       undoButton(nullptr),
       resetButton(nullptr),
-      homeButton(nullptr),
-      guideButton(nullptr),
+      homeButton(nullptr),      guideButton(nullptr),
       guideOverlay(nullptr),
+      gameResultOverlay(nullptr),
       boardController(nullptr)
 {
     setupUI();
@@ -34,9 +34,10 @@ GameView::GameView(QWidget *parent)
     connect(boardController, &BoardController::highlightMovesSignal, 
             boardView, &BoardView::highlightMoves);
     connect(boardController, &BoardController::pegsRemainingChanged,
-            this, &GameView::updatePegCount);
-    connect(boardController, &BoardController::navigateToHome,
+            this, &GameView::updatePegCount);    connect(boardController, &BoardController::navigateToHome,
             this, &GameView::navigateToHome);
+    connect(boardController, &BoardController::gameOver,
+            this, &GameView::onGameOver);
     
     // Connect view signals to controller
     connect(boardView, &BoardView::undoClicked,
@@ -305,8 +306,195 @@ void GameView::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     
-    // Resize the overlay to match the new size
+    // Resize the overlays to match the new size
     if (guideOverlay && guideOverlay->isVisible()) {
         guideOverlay->resize(this->size());
     }
+    if (gameResultOverlay && gameResultOverlay->isVisible()) {
+        gameResultOverlay->resize(this->size());
+    }
+}
+
+void GameView::onGameOver()
+{
+    if (!boardController || !boardController->getBoardModel()) {
+        return;
+    }
+    
+    Board *board = boardController->getBoardModel();
+    int pegCount = board->getPegCount();
+    bool isWin = (pegCount == 1);
+    
+    qDebug() << "GameView: Game over detected. Peg count:" << pegCount << "Win:" << isWin;
+    
+    showGameResultOverlay(isWin, pegCount);
+}
+
+void GameView::showGameResultOverlay(bool isWin, int pegCount)
+{
+    // If overlay already exists, remove it
+    if (gameResultOverlay) {
+        gameResultOverlay->deleteLater();
+        gameResultOverlay = nullptr;
+    }
+    
+    // Create overlay widget
+    gameResultOverlay = new QWidget(this);
+    gameResultOverlay->setStyleSheet(
+        "QWidget {"
+        "background-color: rgba(0, 0, 0, 180);" // Semi-transparent dark background
+        "}"
+    );
+      // Create the content widget
+    QWidget *contentWidget = new QWidget(gameResultOverlay);
+    contentWidget->setFixedSize(450, 400);
+    contentWidget->setStyleSheet(
+        "QWidget {"
+        "background-color: #f8f9fa;"
+        "border: 3px solid " + QString(isWin ? "#28a745" : "#dc3545") + ";"
+        "border-radius: 15px;"
+        "}"
+    );
+    
+    // Create layout for the content
+    QVBoxLayout *contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(30, 25, 30, 30);
+    contentLayout->setSpacing(20);
+    
+    // Result icon and title
+    QLabel *iconLabel = new QLabel(contentWidget);
+    iconLabel->setAlignment(Qt::AlignCenter);
+    iconLabel->setStyleSheet(
+        "QLabel {"
+        "background: transparent;"
+        "border: none;"
+        "font-size: 48px;"
+        "}"
+    );
+    iconLabel->setText(isWin ? "🏆" : "💔");
+    
+    QLabel *titleLabel = new QLabel(contentWidget);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet(
+        "QLabel {"
+        "color: " + QString(isWin ? "#28a745" : "#dc3545") + ";"
+        "font-size: 24px;"
+        "font-weight: bold;"
+        "background: transparent;"
+        "border: none;"
+        "}"
+    );
+    titleLabel->setText(isWin ? "Congratulations!" : "Game Over");
+    
+    // Result message
+    QLabel *messageLabel = new QLabel(contentWidget);
+    messageLabel->setAlignment(Qt::AlignCenter);
+    messageLabel->setWordWrap(true);
+    messageLabel->setStyleSheet(
+        "QLabel {"
+        "color: #2c3e50;"
+        "font-size: 16px;"
+        "background: transparent;"
+        "border: none;"
+        "line-height: 1.4;"
+        "}"
+    );
+    
+    if (isWin) {
+        messageLabel->setText("Excellent work! You've successfully reduced the board to just one peg. You are a Peg Solitaire master!");
+    } else {
+        messageLabel->setText(QString("No more moves available!\nYou finished with %1 pegs remaining.\nDon't give up - try again!").arg(pegCount));
+    }
+    
+    // Play Again button
+    QPushButton *playAgainButton = new QPushButton("Play Again", contentWidget);
+    playAgainButton->setStyleSheet(
+        "QPushButton {"
+        "background-color: " + QString(isWin ? "#28a745" : "#007bff") + ";"
+        "color: white;"
+        "border: none;"
+        "border-radius: 8px;"
+        "padding: 12px 30px;"
+        "font-size: 16px;"
+        "font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "background-color: " + QString(isWin ? "#218838" : "#0056b3") + ";"
+        "}"
+        "QPushButton:pressed {"
+        "background-color: " + QString(isWin ? "#1e7e34" : "#004085") + ";"
+        "}"
+    );
+    
+    // Home button
+    QPushButton *homeButton = new QPushButton("Main Menu", contentWidget);
+    homeButton->setStyleSheet(
+        "QPushButton {"
+        "background-color: #6c757d;"
+        "color: white;"
+        "border: none;"
+        "border-radius: 8px;"
+        "padding: 12px 30px;"
+        "font-size: 16px;"
+        "font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "background-color: #5a6268;"
+        "}"
+        "QPushButton:pressed {"
+        "background-color: #495057;"
+        "}"
+    );
+    
+    // Button layout
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(playAgainButton);
+    buttonLayout->addWidget(homeButton);
+    buttonLayout->setSpacing(15);
+    
+    // Add widgets to content layout
+    contentLayout->addWidget(iconLabel);
+    contentLayout->addWidget(titleLabel);
+    contentLayout->addWidget(messageLabel);
+    contentLayout->addStretch();
+    contentLayout->addLayout(buttonLayout);
+    
+    // Position content widget in center of overlay
+    QVBoxLayout *overlayLayout = new QVBoxLayout(gameResultOverlay);
+    overlayLayout->setContentsMargins(0, 0, 0, 0);
+    overlayLayout->addStretch();
+    
+    QHBoxLayout *centerLayout = new QHBoxLayout();
+    centerLayout->addStretch();
+    centerLayout->addWidget(contentWidget);
+    centerLayout->addStretch();
+    
+    overlayLayout->addLayout(centerLayout);
+    overlayLayout->addStretch();
+    
+    // Connect buttons
+    connect(playAgainButton, &QPushButton::clicked, [this]() {
+        if (gameResultOverlay) {
+            gameResultOverlay->hide();
+        }
+        // Reset the current board
+        if (boardController) {
+            boardController->onResetClicked();
+        }
+    });
+    
+    connect(homeButton, &QPushButton::clicked, [this]() {
+        if (gameResultOverlay) {
+            gameResultOverlay->hide();
+        }
+        // Navigate to home
+        emit navigateToHome();
+    });
+    
+    // Make overlay fill the entire GameView
+    gameResultOverlay->resize(this->size());
+    
+    // Show the overlay
+    gameResultOverlay->show();
+    gameResultOverlay->raise();
 }

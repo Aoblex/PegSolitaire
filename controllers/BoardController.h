@@ -23,13 +23,17 @@ public:
      * @brief Set the board model for this controller
      * @param model Pointer to the board model
      */
-    void setBoardModel(Board *model);
-
-    /**
+    void setBoardModel(Board *model);    /**
      * @brief Set the board view for this controller
      * @param view Pointer to the board view
      */
     void setBoardView(BoardView *view);
+
+    /**
+     * @brief Get the current board model
+     * @return Pointer to the board model
+     */
+    Board* getBoardModel() const;
 
 signals:
     /**

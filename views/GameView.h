@@ -63,9 +63,11 @@ private:
     QPushButton *resetButton;
     QPushButton *homeButton;
     QPushButton *guideButton;
-    
-    // Guide overlay
+      // Guide overlay
     QWidget *guideOverlay;
+    
+    // Game result overlays
+    QWidget *gameResultOverlay;
     
     // Controller
     BoardController *boardController;
@@ -79,11 +81,23 @@ private:
      * @param count Current number of pegs
      */
     void updatePegCount(int count);
-    
-    /**
+      /**
      * @brief Show the guide information dialog
      */
     void showGuideDialog();
+    
+    /**
+     * @brief Show game result overlay (win or lose)
+     * @param isWin True if player won, false if lost
+     * @param pegCount Final number of pegs remaining
+     */
+    void showGameResultOverlay(bool isWin, int pegCount);
+
+private slots:
+    /**
+     * @brief Handle game over signal from board controller
+     */
+    void onGameOver();
 };
 
 #endif // GAMEVIEW_H
