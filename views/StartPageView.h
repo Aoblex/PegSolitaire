@@ -33,13 +33,11 @@ private:
     QPushButton *classicEnglishButton;
     QPushButton *classicEuropeanButton;
     QPushButton *classicCrossButton;
-    QPushButton *classicStarButton;
 
     // Column 2: Special Game Mode
     QVBoxLayout *specialModeLayout;
     QLabel *specialModeLabel;
     QPushButton *specialAntiPegButton;
-    QPushButton *specialDestinationButton;
     QPushButton *specialEndgameButton;
 
     // Column 3: Peg Duo Mode
@@ -49,14 +47,6 @@ private:
 
     QPushButton *backButton;
     QVBoxLayout *mainLayout; // Overall vertical layout
-
-    // Remove old individual buttons and gridLayout if no longer directly used
-    // QPushButton *classicButton;
-    // QPushButton *europeanButton;
-    // QPushButton *crossButton;
-    // QPushButton *starButton;
-    // QPushButton *endgameButton;
-    // QGridLayout *gridLayout;
 };
 
 #endif // STARTPAGEVIEW_H

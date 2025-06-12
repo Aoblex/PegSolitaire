@@ -59,7 +59,7 @@ void MainWindow::showSettingsPage() // Add this function
     stackedWidget->setCurrentWidget(settingsPageView);
 }
 
-void MainWindow::startGame(BoardType boardType) // Changed QString to BoardType
+void MainWindow::startGame(BoardType boardType)
 {
     qDebug() << "Main window: Attempting to start game with board type (enum):" << static_cast<int>(boardType);
 

@@ -31,11 +31,9 @@ StartPageView::StartPageView(QWidget *parent)
     classicEnglishButton = new QPushButton("English Board", this);
     classicEuropeanButton = new QPushButton("European Board", this);
     classicCrossButton = new QPushButton("Cross Board", this);
-    classicStarButton = new QPushButton("Star Board", this);
     classicModeLayout->addWidget(classicEnglishButton);
     classicModeLayout->addWidget(classicEuropeanButton);
     classicModeLayout->addWidget(classicCrossButton);
-    classicModeLayout->addWidget(classicStarButton);
     classicModeLayout->addStretch(); // Pushes buttons to the top
     columnsLayout->addLayout(classicModeLayout);
 
@@ -45,23 +43,11 @@ StartPageView::StartPageView(QWidget *parent)
     specialModeLabel->setFont(titleFont);
     specialModeLayout->addWidget(specialModeLabel, 0, Qt::AlignHCenter);
     specialAntiPegButton = new QPushButton("Anti-Peg Mode", this);
-    specialDestinationButton = new QPushButton("Destination Mode", this);
     specialEndgameButton = new QPushButton("Endgame Scenarios", this);
     specialModeLayout->addWidget(specialAntiPegButton);
-    specialModeLayout->addWidget(specialDestinationButton);
     specialModeLayout->addWidget(specialEndgameButton);
     specialModeLayout->addStretch();
     columnsLayout->addLayout(specialModeLayout);
-
-    // --- Column 3: Peg Duo Mode ---
-    pegDuoModeLayout = new QVBoxLayout();
-    pegDuoModeLabel = new QLabel("Peg Duo", this);
-    pegDuoModeLabel->setFont(titleFont);
-    pegDuoModeLayout->addWidget(pegDuoModeLabel, 0, Qt::AlignHCenter);
-    pegDuoButton = new QPushButton("Start Peg Duo", this);
-    pegDuoModeLayout->addWidget(pegDuoButton);
-    pegDuoModeLayout->addStretch();
-    columnsLayout->addLayout(pegDuoModeLayout);
 
     mainLayout->addLayout(columnsLayout);
 
@@ -81,13 +67,9 @@ StartPageView::StartPageView(QWidget *parent)
             { emit gameModeSelected(BoardType::European); });
     connect(classicCrossButton, &QPushButton::clicked, this, [this]()
             { emit gameModeSelected(BoardType::Cross); });
-    connect(classicStarButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::Star); });
 
     // Special Mode Buttons
     connect(specialAntiPegButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::English); });
-    connect(specialDestinationButton, &QPushButton::clicked, this, [this]()
             { emit gameModeSelected(BoardType::English); });
     connect(specialEndgameButton, &QPushButton::clicked, this, [this]()
             { emit gameModeSelected(BoardType::English); });
