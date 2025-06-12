@@ -104,40 +104,26 @@ protected:
 
 private slots:
     /**
-     * @brief Handle undo button press
+     * @brief Handle undo button press (kept for compatibility)
      */
     void onUndoButtonClicked();
 
     /**
-     * @brief Handle reset button press
+     * @brief Handle reset button press (kept for compatibility)
      */
     void onResetButtonClicked();
 
     /**
-     * @brief Handle home button press
+     * @brief Handle home button press (kept for compatibility)
      */
     void onHomeButtonClicked();
 
 private:
-    // UI Components
-    QVBoxLayout *mainLayout;
-    QHBoxLayout *controlLayout;
-    QHBoxLayout *infoLayout;
-    QWidget *boardWidget;
-    
-    // Control buttons
-    QPushButton *undoButton;
-    QPushButton *resetButton;
-    QPushButton *homeButton;
-    
-    // Info display
-    QLabel *pegCountLabel;
-    QLabel *instructionLabel;
-    
     // Board data
     Board *boardModel;
     QList<Move> highlightedMoves;
-      // Visual properties - now dynamic
+    
+    // Visual properties - now dynamic
     int cellSize;
     int pegRadius;
     int boardMargin;

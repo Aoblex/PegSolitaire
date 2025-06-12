@@ -11,15 +11,6 @@
 
 BoardView::BoardView(QWidget *parent)
     : QWidget(parent),
-      mainLayout(nullptr),
-      controlLayout(nullptr),
-      infoLayout(nullptr),
-      boardWidget(nullptr),
-      undoButton(nullptr),
-      resetButton(nullptr),
-      homeButton(nullptr),
-      pegCountLabel(nullptr),
-      instructionLabel(nullptr),
       boardModel(nullptr),
       cellSize(40),
       pegRadius(15),
@@ -48,63 +39,9 @@ void BoardView::setupColors()
 
 void BoardView::setupUI()
 {
-    mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(5);
-    mainLayout->setContentsMargins(5, 5, 5, 5);
-
-    // Info layout for peg count and instructions
-    infoLayout = new QHBoxLayout();
-    
-    pegCountLabel = new QLabel("Pegs: 0", this);
-    QFont labelFont = pegCountLabel->font();
-    labelFont.setPointSize(14);
-    labelFont.setBold(true);
-    pegCountLabel->setFont(labelFont);
-    pegCountLabel->setAlignment(Qt::AlignCenter);
-    
-    instructionLabel = new QLabel("Click a peg to select it, then click an empty hole to move", this);
-    instructionLabel->setFont(labelFont);
-    instructionLabel->setAlignment(Qt::AlignCenter);
-    instructionLabel->setWordWrap(true);
-    
-    infoLayout->addWidget(pegCountLabel);
-    infoLayout->addWidget(instructionLabel, 1); // Give more space to instructions
-    
-    mainLayout->addLayout(infoLayout);
-
-    // Board widget - this will expand to fill available space
-    boardWidget = new QWidget(this);
-    boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    boardWidget->setMinimumSize(200, 200);  // Ensure minimum usable size
-    mainLayout->addWidget(boardWidget, 1); // Give most space to the board
-
-    // Control buttons layout
-    controlLayout = new QHBoxLayout();
-    
-    undoButton = new QPushButton("Undo", this);
-    resetButton = new QPushButton("Reset", this);
-    homeButton = new QPushButton("Home", this);
-    
-    // Apply consistent button styles using ButtonStyles utility
-    ButtonStyles::applyControlStyle(undoButton);
-    ButtonStyles::applyControlStyle(resetButton);
-    ButtonStyles::applyControlStyle(homeButton);
-    
-    controlLayout->addWidget(undoButton);
-    controlLayout->addWidget(resetButton);
-    controlLayout->addWidget(homeButton);
-    controlLayout->setSpacing(10);
-    
-    mainLayout->addLayout(controlLayout);
-
-    // Connect button signals
-    connect(undoButton, &QPushButton::clicked, this, &BoardView::onUndoButtonClicked);
-    connect(resetButton, &QPushButton::clicked, this, &BoardView::onResetButtonClicked);
-    connect(homeButton, &QPushButton::clicked, this, &BoardView::onHomeButtonClicked);
-
-    setLayout(mainLayout);
-    
-    // Set size policy for the main widget to expand
+    // Simplified UI - just the board widget for drawing
+    // All controls and scoring are now handled by GameView
+    setMinimumSize(300, 300);  // Ensure minimum usable size for the board
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
@@ -120,10 +57,7 @@ void BoardView::setBoard(Board *board)
 
 void BoardView::updateView()
 {
-    if (boardWidget) {
-        boardWidget->update();
-        update(); // Update the entire widget
-    }
+    update(); // Update the entire widget
 }
 
 void BoardView::highlightMoves(const QList<Move> &moves)
@@ -134,9 +68,9 @@ void BoardView::highlightMoves(const QList<Move> &moves)
 
 void BoardView::updatePegCount(int count)
 {
-    if (pegCountLabel) {
-        pegCountLabel->setText(QString("Pegs: %1").arg(count));
-    }
+    // This method is kept for compatibility but does nothing since
+    // peg count is now displayed in GameView
+    Q_UNUSED(count);
 }
 
 void BoardView::paintEvent(QPaintEvent *event)
@@ -148,12 +82,12 @@ void BoardView::paintEvent(QPaintEvent *event)
     }
 
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);    // Get board widget geometry
-    QRect boardRect = boardWidget->geometry();
+    painter.setRenderHint(QPainter::Antialiasing);
     
     // Get the centered board rectangle
     QRect centeredBoardRect = getCenteredBoardRect();
-      // Fill the centered board background
+    
+    // Fill the centered board background
     painter.fillRect(centeredBoardRect, boardBackgroundColor);
 
     // Draw board cells
@@ -165,8 +99,8 @@ void BoardView::paintEvent(QPaintEvent *event)
             Position pos(r, c);
             QPoint screenPos = getScreenPosition(pos);
             
-            // Only draw if position is within the board widget
-            if (boardRect.contains(screenPos)) {
+            // Only draw if position is within the widget
+            if (rect().contains(screenPos)) {
                 drawCell(painter, pos, screenPos);
             }
         }
@@ -228,22 +162,25 @@ void BoardView::showEvent(QShowEvent *event)
 
 void BoardView::onUndoButtonClicked()
 {
+    // Kept for compatibility - emit signal
     emit undoClicked();
 }
 
 void BoardView::onResetButtonClicked()
 {
+    // Kept for compatibility - emit signal
     emit resetClicked();
 }
 
 void BoardView::onHomeButtonClicked()
 {
+    // Kept for compatibility - emit signal
     emit homeClicked();
 }
 
 Position BoardView::getBoardPosition(const QPoint &point)
 {
-    if (!boardModel || !boardWidget) {
+    if (!boardModel) {
         return Position(-1, -1);
     }
 
@@ -265,7 +202,7 @@ Position BoardView::getBoardPosition(const QPoint &point)
 
 QPoint BoardView::getScreenPosition(const Position &pos)
 {
-    if (!boardWidget || !boardModel) {
+    if (!boardModel) {
         return QPoint(-1, -1);
     }
 
@@ -373,24 +310,15 @@ QSize BoardView::calculateBoardSize()
 
 void BoardView::calculateDynamicSizes()
 {
-    if (!boardModel || !boardWidget) {
+    if (!boardModel) {
         return;
     }
 
-    // Get available space for the board widget
-    QRect availableSpace = boardWidget->geometry();
+    // Get available space from the widget size
+    QRect availableSpace = rect();
     
-    // If board widget geometry is not set or too small, use parent size
-    if (availableSpace.width() <= 0 || availableSpace.height() <= 0) {
-        availableSpace = rect();
-        // Reserve space for controls and info labels (approximately 120px)
-        int reservedHeight = 120;
-        if (availableSpace.height() > reservedHeight) {
-            availableSpace.setHeight(availableSpace.height() - reservedHeight);
-        }
-        // Add some margin
-        availableSpace.adjust(10, 10, -10, -10);
-    }
+    // Add some margin
+    availableSpace.adjust(10, 10, -10, -10);
 
     int rows = boardModel->getRows();
     int cols = boardModel->getCols();
@@ -417,7 +345,8 @@ void BoardView::calculateDynamicSizes()
     pegRadius = static_cast<int>(cellSize * 0.3);
     pegRadius = qMax(pegRadius, 6);   // Minimum peg size
     pegRadius = qMin(pegRadius, 35);  // Maximum peg size
-      // Adjust board margin based on cell size
+    
+    // Adjust board margin based on cell size
     boardMargin = static_cast<int>(cellSize * 0.4);
     boardMargin = qMax(boardMargin, 8);   // Minimum margin
     boardMargin = qMin(boardMargin, 50);  // Maximum margin
@@ -425,11 +354,11 @@ void BoardView::calculateDynamicSizes()
 
 QRect BoardView::getCenteredBoardRect()
 {
-    if (!boardModel || !boardWidget) {
+    if (!boardModel) {
         return QRect();
     }
 
-    QRect boardRect = boardWidget->geometry();
+    QRect widgetRect = rect();
     
     // Calculate the actual board size
     int rows = boardModel->getRows();
@@ -438,8 +367,8 @@ QRect BoardView::getCenteredBoardRect()
     int boardHeight = rows * cellSize + 2 * boardMargin;
     
     // Center the board within the widget
-    int startX = boardRect.left() + (boardRect.width() - boardWidth) / 2;
-    int startY = boardRect.top() + (boardRect.height() - boardHeight) / 2;
+    int startX = widgetRect.left() + (widgetRect.width() - boardWidth) / 2;
+    int startY = widgetRect.top() + (widgetRect.height() - boardHeight) / 2;
     
     return QRect(startX, startY, boardWidth, boardHeight);
 }

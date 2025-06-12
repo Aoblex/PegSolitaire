@@ -3,15 +3,21 @@
 
 #include <QWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
 #include "views/BoardView.h"
 #include "controllers/BoardController.h"
 #include "models/Board.h"
 
 /**
- * @brief Container view that manages the board view and controller
+ * @brief Container view that manages the board view and controller with proper game UI layout
  * 
- * This class acts as a container that combines the BoardView with its controller
- * to provide a complete game interface.
+ * This class acts as a container that combines the BoardView with scoring board and controls
+ * to provide a complete game interface following the specified layout requirements:
+ * - Scoring board on the right
+ * - Peg board on the left aligned with scoring board
+ * - Control buttons at upper right corner
  */
 class GameView : public QWidget
 {
@@ -34,9 +40,38 @@ signals:
     void navigateToHome();
 
 private:
+    // Main layout structure
     QVBoxLayout *mainLayout;
+    QHBoxLayout *gameLayout;
+    QVBoxLayout *rightSideLayout;
+    QHBoxLayout *controlButtonsLayout;
+    
+    // Board display
     BoardView *boardView;
+    
+    // Right side components
+    QLabel *scoringBoardTitle;
+    QLabel *pegCountLabel;
+    QLabel *instructionLabel;
+    
+    // Control buttons (upper right)
+    QPushButton *undoButton;
+    QPushButton *resetButton;
+    QPushButton *homeButton;
+    
+    // Controller
     BoardController *boardController;
+    
+    /**
+     * @brief Setup the UI layout according to requirements
+     */
+    void setupUI();
+    
+    /**
+     * @brief Update the peg count display
+     * @param count Current number of pegs
+     */
+    void updatePegCount(int count);
 };
 
 #endif // GAMEVIEW_H
