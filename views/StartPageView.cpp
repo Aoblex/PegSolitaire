@@ -80,7 +80,7 @@ StartPageView::StartPageView(QWidget *parent)
 
     // Special Mode Buttons
     connect(specialAntiPegButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::English); });
+            { emit gameModeSelected(BoardType::AntiPeg); });
     connect(specialEndgameButton, &QPushButton::clicked, this, [this]()
             { emit gameModeSelected(BoardType::English); });
 

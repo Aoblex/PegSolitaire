@@ -12,6 +12,7 @@ enum class BoardType
     English,
     European,
     Cross,
+    AntiPeg,  // Anti-peg mode: start with one peg, fill the board
     // Add other board types here
 };
 
@@ -78,12 +79,19 @@ public:
     int getPegCount() const;
     bool isGameOver() const;
     BoardType getBoardType() const;
+    
+    /**
+     * @brief Check if this board is in anti-peg mode
+     * @return True if the board is in anti-peg mode
+     */
+    bool isAntiPegMode() const;
 
 private:
     // Board setup methods
     void setupEnglishStandard();
     void setupEuropeanStandard();
     void setupCross();
+    void setupAntiPeg();  // Anti-peg mode setup
 
     // Board data
     QVector<QVector<PegState>> grid;

@@ -32,6 +32,9 @@ void Board::initializeBoard(BoardType boardType)
         case BoardType::Cross:
             setupCross();
             break;
+        case BoardType::AntiPeg:
+            setupAntiPeg();
+            break;
         default:
             qWarning() << "Unknown or unsupported board type:" << static_cast<int>(boardType);
             setupEnglishStandard(); // Default fallback
@@ -84,20 +87,46 @@ QVector<Move> Board::getValidMoves() const
     int dr[] = {-1, 1, 0, 0};
     int dc[] = {0, 0, -1, 1};
 
-    for (int r = 0; r < rows; ++r)
-    {
-        for (int c = 0; c < cols; ++c)
+    if (isAntiPegMode()) {
+        // Anti-peg mode: peg jumps over empty cell to another empty cell, 
+        // leaving a peg in the jumped-over cell
+        for (int r = 0; r < rows; ++r)
         {
-            if (getPegState({r, c}) == PegState::Peg)
+            for (int c = 0; c < cols; ++c)
             {
-                for (int i = 0; i < 4; ++i)
+                if (getPegState({r, c}) == PegState::Peg)
                 {
-                    Position jumped(r + dr[i], c + dc[i]);
-                    Position to(r + 2 * dr[i], c + 2 * dc[i]);
-
-                    if (getPegState(jumped) == PegState::Peg && getPegState(to) == PegState::Empty)
+                    for (int i = 0; i < 4; ++i)
                     {
-                        moves.append({{r, c}, jumped, to});
+                        Position jumped(r + dr[i], c + dc[i]);
+                        Position to(r + 2 * dr[i], c + 2 * dc[i]);
+
+                        // In anti-peg mode: jump over empty to empty, placing peg in jumped position
+                        if (getPegState(jumped) == PegState::Empty && getPegState(to) == PegState::Empty)
+                        {
+                            moves.append({{r, c}, jumped, to});
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Normal mode: peg jumps over peg to empty cell, removing jumped peg
+        for (int r = 0; r < rows; ++r)
+        {
+            for (int c = 0; c < cols; ++c)
+            {
+                if (getPegState({r, c}) == PegState::Peg)
+                {
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        Position jumped(r + dr[i], c + dc[i]);
+                        Position to(r + 2 * dr[i], c + 2 * dc[i]);
+
+                        if (getPegState(jumped) == PegState::Peg && getPegState(to) == PegState::Empty)
+                        {
+                            moves.append({{r, c}, jumped, to});
+                        }
                     }
                 }
             }
@@ -108,37 +137,73 @@ QVector<Move> Board::getValidMoves() const
 
 bool Board::performMove(const Move &move)
 {
-    // Validate move
-    if (getPegState(move.from) == PegState::Peg &&
-        getPegState(move.jumped) == PegState::Peg &&
-        getPegState(move.to) == PegState::Empty)
-    {
-        bool validJumpPath = false;
-        // Standard rectangular jump validation
-        int dr[] = {-1, 1, 0, 0};
-        int dc[] = {0, 0, -1, 1};
-        for (int i = 0; i < 4; ++i)
+    if (isAntiPegMode()) {
+        // Anti-peg mode validation: peg jumps over empty to empty, placing peg in jumped cell
+        if (getPegState(move.from) == PegState::Peg &&
+            getPegState(move.jumped) == PegState::Empty &&
+            getPegState(move.to) == PegState::Empty)
         {
-            if (move.jumped.row == move.from.row + dr[i] &&
-                move.jumped.col == move.from.col + dc[i] &&
-                move.to.row == move.from.row + 2 * dr[i] &&
-                move.to.col == move.from.col + 2 * dc[i])
+            bool validJumpPath = false;
+            // Standard rectangular jump validation
+            int dr[] = {-1, 1, 0, 0};
+            int dc[] = {0, 0, -1, 1};
+            for (int i = 0; i < 4; ++i)
             {
-                validJumpPath = true;
-                break;
+                if (move.jumped.row == move.from.row + dr[i] &&
+                    move.jumped.col == move.from.col + dc[i] &&
+                    move.to.row == move.from.row + 2 * dr[i] &&
+                    move.to.col == move.from.col + 2 * dc[i])
+                {
+                    validJumpPath = true;
+                    break;
+                }
+            }
+
+            if (validJumpPath)
+            {
+                // Store move in history for undo
+                moveHistory.append(move);
+                
+                // Perform anti-peg move: move peg to destination, place peg in jumped cell
+                setPegState(move.from, PegState::Empty);
+                setPegState(move.jumped, PegState::Peg);    // Place peg in jumped cell
+                setPegState(move.to, PegState::Peg);
+                return true;
             }
         }
-
-        if (validJumpPath)
+    } else {
+        // Normal mode validation: peg jumps over peg to empty, removing jumped peg
+        if (getPegState(move.from) == PegState::Peg &&
+            getPegState(move.jumped) == PegState::Peg &&
+            getPegState(move.to) == PegState::Empty)
         {
-            // Store move in history for undo
-            moveHistory.append(move);
-            
-            // Perform the move
-            setPegState(move.from, PegState::Empty);
-            setPegState(move.jumped, PegState::Empty);
-            setPegState(move.to, PegState::Peg);
-            return true;
+            bool validJumpPath = false;
+            // Standard rectangular jump validation
+            int dr[] = {-1, 1, 0, 0};
+            int dc[] = {0, 0, -1, 1};
+            for (int i = 0; i < 4; ++i)
+            {
+                if (move.jumped.row == move.from.row + dr[i] &&
+                    move.jumped.col == move.from.col + dc[i] &&
+                    move.to.row == move.from.row + 2 * dr[i] &&
+                    move.to.col == move.from.col + 2 * dc[i])
+                {
+                    validJumpPath = true;
+                    break;
+                }
+            }
+
+            if (validJumpPath)
+            {
+                // Store move in history for undo
+                moveHistory.append(move);
+                
+                // Perform normal move: move peg to destination, remove jumped peg
+                setPegState(move.from, PegState::Empty);
+                setPegState(move.jumped, PegState::Empty);  // Remove jumped peg
+                setPegState(move.to, PegState::Peg);
+                return true;
+            }
         }
     }
     return false;
@@ -153,10 +218,17 @@ bool Board::undoLastMove()
     // Get the last move from history
     Move lastMove = moveHistory.takeLast();
     
-    // Reverse the move
-    setPegState(lastMove.to, PegState::Empty);     // Remove peg from destination
-    setPegState(lastMove.jumped, PegState::Peg);   // Restore jumped peg
-    setPegState(lastMove.from, PegState::Peg);     // Restore original peg
+    if (isAntiPegMode()) {
+        // Reverse anti-peg move: remove peg from destination and jumped cell, restore original peg
+        setPegState(lastMove.to, PegState::Empty);       // Remove peg from destination
+        setPegState(lastMove.jumped, PegState::Empty);   // Remove peg from jumped cell
+        setPegState(lastMove.from, PegState::Peg);       // Restore original peg
+    } else {
+        // Reverse normal move: remove peg from destination, restore jumped peg, restore original peg
+        setPegState(lastMove.to, PegState::Empty);       // Remove peg from destination
+        setPegState(lastMove.jumped, PegState::Peg);     // Restore jumped peg
+        setPegState(lastMove.from, PegState::Peg);       // Restore original peg
+    }
     
     return true;
 }
@@ -184,4 +256,9 @@ bool Board::isGameOver() const
 BoardType Board::getBoardType() const
 {
     return currentBoardType;
+}
+
+bool Board::isAntiPegMode() const
+{
+    return currentBoardType == BoardType::AntiPeg;
 }

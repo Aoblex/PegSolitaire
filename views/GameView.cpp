@@ -388,9 +388,18 @@ void GameView::onGameOver()
     
     Board *board = boardController->getBoardModel();
     int pegCount = board->getPegCount();
-    bool isWin = (pegCount == 1);
+    bool isWin;
     
-    qDebug() << "GameView: Game over detected. Peg count:" << pegCount << "Win:" << isWin;
+    if (board->isAntiPegMode()) {
+        // In anti-peg mode, game ends when no more moves available
+        // Success is measured by how many pegs were placed
+        isWin = (pegCount == board->getPegCount() - 1);
+    } else {
+        // In normal mode, win only if exactly 1 peg remains
+        isWin = (pegCount == 1);
+    }
+    
+    qDebug() << "GameView: Game over detected. Peg count:" << pegCount << "Win:" << isWin << "Anti-peg mode:" << board->isAntiPegMode();
     
     showGameResultOverlay(isWin, pegCount);
 }

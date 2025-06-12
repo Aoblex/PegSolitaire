@@ -226,18 +226,28 @@ void BoardController::checkGameStatus()
     int pegCount = boardModel->getPegCount();
     bool hasValidMoves = !boardModel->getValidMoves().isEmpty();
     
-    // Check for win condition: only 1 peg left
-    if (pegCount == 1) {
-        qDebug() << "BoardController: Player won! Only 1 peg remaining.";
-        emit gameOver();
-        return;
-    }
-    
-    // Check for lose condition: no valid moves available (and more than 1 peg)
-    if (!hasValidMoves && pegCount > 1) {
-        qDebug() << "BoardController: Game over! No valid moves available. Final peg count:" << pegCount;
-        emit gameOver();
-        return;
+    if (boardModel->isAntiPegMode()) {
+        // Anti-peg mode: game ends when no more moves are available
+        // Goal is to place as many pegs as possible
+        if (!hasValidMoves) {
+            qDebug() << "BoardController: Anti-peg game over! Final peg count:" << pegCount;
+            emit gameOver();
+            return;
+        }
+    } else {
+        // Normal mode: check for win condition (only 1 peg left) or lose condition
+        if (pegCount == 1) {
+            qDebug() << "BoardController: Player won! Only 1 peg remaining.";
+            emit gameOver();
+            return;
+        }
+        
+        // Check for lose condition: no valid moves available (and more than 1 peg)
+        if (!hasValidMoves && pegCount > 1) {
+            qDebug() << "BoardController: Game over! No valid moves available. Final peg count:" << pegCount;
+            emit gameOver();
+            return;
+        }
     }
 }
 
