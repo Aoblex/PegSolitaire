@@ -233,11 +233,24 @@ void BoardController::checkGameStatus()
         return;
     }
     
+    // Check for winning condition first
+    if (boardModel->isWinningState()) {
+        if (boardModel->isAntiPegMode()) {
+            qDebug() << "BoardController: Anti-peg victory! One empty space remains at starting position.";
+            emit informationUpdated("Victory!\nAnti-peg game won!\nOnly the starting position is empty!");
+        } else {
+            qDebug() << "BoardController: Victory! One peg remains at starting position.";
+            emit informationUpdated("Victory!\nPerfect game!\nOne peg remains at the starting position!");
+        }
+        emit gameOver();
+        return;
+    }
+    
     int pegCount = boardModel->getPegCount();
     bool hasValidMoves = !boardModel->getValidMoves().isEmpty();
+    
     if (boardModel->isAntiPegMode()) {
         // Anti-peg mode: game ends when no more moves are available
-        // Goal is to place as many pegs as possible
         if (!hasValidMoves) {
             qDebug() << "BoardController: Anti-peg game over! Final peg count:" << pegCount;
             emit informationUpdated(QString("Anti-peg game complete!\nFinal peg count: %1\nNo more moves possible.").arg(pegCount));
@@ -246,10 +259,12 @@ void BoardController::checkGameStatus()
         }
     }
     else {
-        // Normal mode: check for win condition (only 1 peg left) or lose condition
-        if (pegCount == 1) {
-            qDebug() << "BoardController: Player won! Only 1 peg remaining.";
-            emit informationUpdated("Congratulations!\nYou won the game!\nOnly 1 peg remaining!");
+        // Normal mode: check for lose condition
+        if (pegCount == 1 && !boardModel->isWinningState()) {
+            // One peg left but not in starting position
+            Position startPos = boardModel->getStartingPosition();
+            qDebug() << "BoardController: One peg remains, but not at starting position (" << startPos.row << "," << startPos.col << ")";
+            emit informationUpdated(QString("Game complete!\n1 peg remaining\nBut not at starting position (%1,%2)").arg(startPos.row).arg(startPos.col));
             emit gameOver();
             return;
         }
@@ -321,17 +336,9 @@ bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
         return false;
     }
 
-    // Check win condition
-    if (board->isAntiPegMode()) {
-        // Anti-peg mode: win when no more moves available
-        if (board->getValidMoves().isEmpty()) {
-            return true;
-        }
-    } else {
-        // Normal mode: win when only 1 peg remains
-        if (board->getPegCount() == 1) {
-            return true;
-        }
+    // Check win condition using the new isWinningState method
+    if (board->isWinningState()) {
+        return true;
     }
 
     // Check if we've reached maximum depth

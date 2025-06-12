@@ -262,3 +262,47 @@ bool Board::isAntiPegMode() const
 {
     return currentBoardType == BoardType::AntiPeg;
 }
+
+Position Board::getStartingPosition() const
+{
+    return startingPosition;
+}
+
+bool Board::isWinningState() const
+{
+    if (isAntiPegMode()) {
+        // Anti-peg mode: win when no more moves available AND
+        // the starting position (where the first peg was) is the only empty cell
+        if (!getValidMoves().isEmpty()) {
+            return false; // Still moves available
+        }
+        
+        // Count empty cells and check if starting position is empty
+        int emptyCells = 0;
+        bool startingPositionEmpty = false;
+        
+        for (int r = 0; r < rows; ++r) {
+            for (int c = 0; c < cols; ++c) {
+                Position pos(r, c);
+                if (getPegState(pos) == PegState::Empty) {
+                    emptyCells++;
+                    if (pos.row == startingPosition.row && pos.col == startingPosition.col) {
+                        startingPositionEmpty = true;
+                    }
+                }
+            }
+        }
+        
+        // Win if exactly one empty cell and it's at the starting position
+        return (emptyCells == 1 && startingPositionEmpty);
+    } else {
+        // Normal mode: win when exactly 1 peg remains AND 
+        // it's at the starting position (where the hole was initially)
+        if (pegCount != 1) {
+            return false;
+        }
+        
+        // Check if the remaining peg is at the starting position
+        return (getPegState(startingPosition) == PegState::Peg);
+    }
+}

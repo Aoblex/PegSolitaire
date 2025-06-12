@@ -79,25 +79,35 @@ public:
     int getPegCount() const;
     bool isGameOver() const;
     BoardType getBoardType() const;
-    
-    /**
+      /**
      * @brief Check if this board is in anti-peg mode
      * @return True if the board is in anti-peg mode
      */
     bool isAntiPegMode() const;
+    
+    /**
+     * @brief Get the starting position of the board
+     * @return The starting position where the game began
+     */
+    Position getStartingPosition() const;
+    
+    /**
+     * @brief Check if the current board state represents a win
+     * @return True if the board is in a winning state
+     */
+    bool isWinningState() const;
 
 private:
     // Board setup methods
     void setupEnglishStandard();
     void setupEuropeanStandard();
     void setupCross();
-    void setupAntiPeg();  // Anti-peg mode setup
-
-    // Board data
+    void setupAntiPeg();  // Anti-peg mode setup    // Board data
     QVector<QVector<PegState>> grid;
     int rows;
     int cols;
     int pegCount;
+    Position startingPosition; // The position where the game started (empty for normal, peg for anti-peg)
 
 protected:
     BoardType currentBoardType;
