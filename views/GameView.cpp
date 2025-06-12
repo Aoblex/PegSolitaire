@@ -5,6 +5,7 @@
 #include <QDialog>
 #include <QMessageBox>
 #include <QResizeEvent>
+#include <QTimer>
 
 GameView::GameView(QWidget *parent)
     : QWidget(parent),
@@ -23,6 +24,9 @@ GameView::GameView(QWidget *parent)
       boardController(nullptr)
 {
     setupUI();
+    
+    // Enable keyboard focus for the entire GameView
+    setFocusPolicy(Qt::StrongFocus);
     
     // Create board controller
     boardController = new BoardController(this);
@@ -48,6 +52,12 @@ GameView::GameView(QWidget *parent)
             boardController, &BoardController::onHomeClicked);
     connect(boardView, &BoardView::suggestMoveClicked,
             boardController, &BoardController::onSuggestMoveClicked);
+    
+    // Connect keyboard navigation signals
+    connect(boardView, &BoardView::pegSelectionRequested,
+            boardController, &BoardController::onPegSelectionRequested);
+    connect(boardView, &BoardView::moveRequested,
+            boardController, &BoardController::onMoveRequested);
     
     // Connect control buttons
     connect(undoButton, &QPushButton::clicked,
@@ -96,10 +106,10 @@ void GameView::setupUI()
     // Main game layout (horizontal: board on left, scoring on right)
     gameLayout = new QHBoxLayout();
     gameLayout->setSpacing(20);
-    
-    // Create simplified board view (without its own controls)
+      // Create simplified board view (without its own controls)
     boardView = new BoardView(this);
     boardView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    boardView->setFocusPolicy(Qt::StrongFocus);
     
     gameLayout->addWidget(boardView, 3); // Give board more space (75%)
     
@@ -171,7 +181,11 @@ void GameView::setBoard(Board *board)
         if (board) {
             updatePegCount(board->getPegCount());
         }
-          qDebug() << "GameView: Board model set successfully";
+        
+        // Give focus to the board view so keyboard controls work
+        boardView->setFocus();
+        
+        qDebug() << "GameView: Board model set successfully";
     }
 }
 
@@ -249,8 +263,7 @@ void GameView::showGuideDialog()
     // Add guide content
     QLabel *guideContent = new QLabel(contentWidget);
     guideContent->setWordWrap(true);
-    guideContent->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-    guideContent->setText(
+    guideContent->setAlignment(Qt::AlignTop | Qt::AlignLeft);    guideContent->setText(
         "<p><b>Goal:</b> Remove all but one peg from the board.</p>"
         "<p><b>How to play:</b></p>"
         "<p>• Jump one peg over another into an empty hole. The peg that is jumped over is removed.</p>"
@@ -260,6 +273,10 @@ void GameView::showGuideDialog()
         "<p>• <b>Undo:</b> Take back your last move</p>"
         "<p>• <b>Reset:</b> Start the game over</p>"
         "<p>• <b>Home:</b> Return to the main menu</p>"
+        "<p><b>Keyboard Controls:</b></p>"
+        "<p>• <b>W/A/S/D:</b> Select peg in the corresponding direction</p>"
+        "<p>• <b>Arrow Keys:</b> Move selected peg in the corresponding direction</p>"
+        "<p>• <b>Spacebar:</b> Get a suggested move</p>"
         "<p><b>Tip:</b> Try to work towards the center of the board!</p>"
     );
     guideContent->setStyleSheet(
@@ -313,6 +330,17 @@ void GameView::resizeEvent(QResizeEvent *event)
     if (gameResultOverlay && gameResultOverlay->isVisible()) {
         gameResultOverlay->resize(this->size());
     }
+}
+
+void GameView::keyPressEvent(QKeyEvent *event)
+{
+    // Let the BoardView handle keyboard events by ensuring it has focus
+    if (boardView && !boardView->hasFocus()) {
+        boardView->setFocus();
+    }
+    
+    // Call the base class implementation
+    QWidget::keyPressEvent(event);
 }
 
 void GameView::onGameOver()

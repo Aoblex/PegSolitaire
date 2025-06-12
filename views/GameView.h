@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QDialog>
+#include <QKeyEvent>
 #include "views/BoardView.h"
 #include "controllers/BoardController.h"
 #include "models/Board.h"
@@ -45,6 +46,11 @@ protected:
      * @brief Handle resize events to properly resize the guide overlay
      */
     void resizeEvent(QResizeEvent *event) override;
+    
+    /**
+     * @brief Handle key events and forward them to the board view
+     */
+    void keyPressEvent(QKeyEvent *event) override;
 
 private:
     // Main layout structure

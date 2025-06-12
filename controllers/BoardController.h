@@ -83,12 +83,22 @@ public slots:
     /**
      * @brief Handle home button click
      */
-    void onHomeClicked();
-
-    /**
+    void onHomeClicked();    /**
      * @brief Handle suggest move button click (spacebar)
      */
     void onSuggestMoveClicked();
+
+    /**
+     * @brief Handle WASD peg selection requests
+     * @param direction Direction to search for peg (0=up/W, 1=left/A, 2=down/S, 3=right/D)
+     */
+    void onPegSelectionRequested(int direction);
+
+    /**
+     * @brief Handle arrow key move requests
+     * @param direction Direction to execute move (0=up, 1=left, 2=down, 3=right)
+     */
+    void onMoveRequested(int direction);
 
 private:
     Board *boardModel;
@@ -119,12 +129,27 @@ private:
      * @brief Check if the game is complete
      */
     void checkGameStatus();
-    
-    /**
+      /**
      * @brief Get a suggested move (first available move)
      * @return A suggested move, or invalid move if none available
      */
     Move getSuggestedMove();
+
+    /**
+     * @brief Find the nearest peg in the specified direction
+     * @param direction Direction to search (0=up, 1=left, 2=down, 3=right)
+     * @return Position of the nearest peg, or invalid position if none found
+     */
+    Position findNearestPeg(int direction);
+
+    /**
+     * @brief Find the center position of the board
+     * @return Center position of the board
+     */
+    Position getBoardCenter();
+
+    // Keyboard navigation state
+    Position currentKeyboardPosition;
 };
 
 #endif // BOARDCONTROLLER_H

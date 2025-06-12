@@ -71,12 +71,22 @@ signals:
     /**
      * @brief Emitted when home button is clicked
      */
-    void homeClicked();
-
-    /**
+    void homeClicked();    /**
      * @brief Emitted when suggest move button is clicked (spacebar)
      */
     void suggestMoveClicked();
+
+    /**
+     * @brief Emitted when WASD keys are pressed for peg selection
+     * @param direction Direction to search for peg (0=up/W, 1=left/A, 2=down/S, 3=right/D)
+     */
+    void pegSelectionRequested(int direction);
+
+    /**
+     * @brief Emitted when arrow keys are pressed for move execution
+     * @param direction Direction to attempt move (0=up, 1=left, 2=down, 3=right)
+     */
+    void moveRequested(int direction);
 
 protected:
     /**

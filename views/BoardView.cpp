@@ -129,11 +129,46 @@ void BoardView::mousePressEvent(QMouseEvent *event)
 
 void BoardView::keyPressEvent(QKeyEvent *event)
 {
-    if (event->key() == Qt::Key_Space) {
+    int key = event->key();
+    
+    // Handle spacebar for suggest move
+    if (key == Qt::Key_Space) {
         emit suggestMoveClicked();
-    } else {
-        QWidget::keyPressEvent(event);
+        return;
     }
+    
+    // Handle WASD for peg selection (0=up/W, 1=left/A, 2=down/S, 3=right/D)
+    if (key == Qt::Key_W) {
+        emit pegSelectionRequested(0); // Up
+        return;
+    } else if (key == Qt::Key_A) {
+        emit pegSelectionRequested(1); // Left
+        return;
+    } else if (key == Qt::Key_S) {
+        emit pegSelectionRequested(2); // Down
+        return;
+    } else if (key == Qt::Key_D) {
+        emit pegSelectionRequested(3); // Right
+        return;
+    }
+    
+    // Handle arrow keys for move execution (0=up, 1=left, 2=down, 3=right)
+    if (key == Qt::Key_Up) {
+        emit moveRequested(0); // Up
+        return;
+    } else if (key == Qt::Key_Left) {
+        emit moveRequested(1); // Left
+        return;
+    } else if (key == Qt::Key_Down) {
+        emit moveRequested(2); // Down
+        return;
+    } else if (key == Qt::Key_Right) {
+        emit moveRequested(3); // Right
+        return;
+    }
+    
+    // Pass other keys to parent
+    QWidget::keyPressEvent(event);
 }
 
 void BoardView::resizeEvent(QResizeEvent *event)
