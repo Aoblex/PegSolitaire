@@ -6,6 +6,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QDialog>
 #include "views/BoardView.h"
 #include "controllers/BoardController.h"
 #include "models/Board.h"
@@ -48,16 +49,15 @@ private:
     
     // Board display
     BoardView *boardView;
-    
-    // Right side components
+      // Right side components
     QLabel *scoringBoardTitle;
     QLabel *pegCountLabel;
-    QLabel *instructionLabel;
     
     // Control buttons (upper right)
     QPushButton *undoButton;
     QPushButton *resetButton;
     QPushButton *homeButton;
+    QPushButton *guideButton;
     
     // Controller
     BoardController *boardController;
@@ -66,12 +66,16 @@ private:
      * @brief Setup the UI layout according to requirements
      */
     void setupUI();
-    
-    /**
+      /**
      * @brief Update the peg count display
      * @param count Current number of pegs
      */
     void updatePegCount(int count);
+    
+    /**
+     * @brief Show the guide information dialog
+     */
+    void showGuideDialog();
 };
 
 #endif // GAMEVIEW_H

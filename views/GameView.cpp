@@ -2,6 +2,8 @@
 #include "utils/ButtonStyles.h"
 #include <QDebug>
 #include <QFont>
+#include <QDialog>
+#include <QMessageBox>
 
 GameView::GameView(QWidget *parent)
     : QWidget(parent),
@@ -12,10 +14,10 @@ GameView::GameView(QWidget *parent)
       boardView(nullptr),
       scoringBoardTitle(nullptr),
       pegCountLabel(nullptr),
-      instructionLabel(nullptr),
       undoButton(nullptr),
       resetButton(nullptr),
       homeButton(nullptr),
+      guideButton(nullptr),
       boardController(nullptr)
 {
     setupUI();
@@ -48,9 +50,10 @@ GameView::GameView(QWidget *parent)
     connect(undoButton, &QPushButton::clicked,
             boardController, &BoardController::onUndoClicked);
     connect(resetButton, &QPushButton::clicked,
-            boardController, &BoardController::onResetClicked);
-    connect(homeButton, &QPushButton::clicked,
+            boardController, &BoardController::onResetClicked);    connect(homeButton, &QPushButton::clicked,
             boardController, &BoardController::onHomeClicked);
+    connect(guideButton, &QPushButton::clicked,
+            this, &GameView::showGuideDialog);
 }
 
 GameView::~GameView()
@@ -68,19 +71,21 @@ void GameView::setupUI()
     // Control buttons layout at the top right
     controlButtonsLayout = new QHBoxLayout();
     controlButtonsLayout->addStretch(); // Push buttons to the right
-    
-    undoButton = new QPushButton("Undo", this);
+      undoButton = new QPushButton("Undo", this);
     resetButton = new QPushButton("Reset", this);
     homeButton = new QPushButton("Home", this);
+    guideButton = new QPushButton("Guide", this);
     
     // Apply consistent button styles
     ButtonStyles::applyControlStyle(undoButton);
     ButtonStyles::applyControlStyle(resetButton);
     ButtonStyles::applyControlStyle(homeButton);
+    ButtonStyles::applyControlStyle(guideButton);
     
     controlButtonsLayout->addWidget(undoButton);
     controlButtonsLayout->addWidget(resetButton);
     controlButtonsLayout->addWidget(homeButton);
+    controlButtonsLayout->addWidget(guideButton);
     controlButtonsLayout->setSpacing(10);
     
     mainLayout->addLayout(controlButtonsLayout);
@@ -130,27 +135,10 @@ void GameView::setupUI()
         "border: 2px solid #27ae60;"
         "border-radius: 8px;"
         "padding: 15px;"
-        "}"
-    );
-    
-    // Instruction label
-    instructionLabel = new QLabel("Click a peg to select it,\nthen click an empty hole to move", this);
-    instructionLabel->setFont(labelFont);
-    instructionLabel->setAlignment(Qt::AlignCenter);
-    instructionLabel->setWordWrap(true);
-    instructionLabel->setStyleSheet(
-        "QLabel {"
-        "color: #34495e;"
-        "background: #f8f9fa;"
-        "border: 1px solid #dee2e6;"
-        "border-radius: 6px;"
-        "padding: 10px;"
-        "}"
-    );
+        "}"    );
     
     rightSideLayout->addWidget(scoringBoardTitle);
     rightSideLayout->addWidget(pegCountLabel);
-    rightSideLayout->addWidget(instructionLabel);
     rightSideLayout->addStretch(); // Push content to top
     
     gameLayout->addLayout(rightSideLayout, 1); // Give scoring board less space (25%)
@@ -180,7 +168,87 @@ void GameView::setBoard(Board *board)
         if (board) {
             updatePegCount(board->getPegCount());
         }
-        
-        qDebug() << "GameView: Board model set successfully";
+          qDebug() << "GameView: Board model set successfully";
     }
+}
+
+void GameView::showGuideDialog()
+{
+    // Create a custom dialog for the guide
+    QDialog *guideDialog = new QDialog(this);
+    guideDialog->setWindowTitle("Game Guide");
+    guideDialog->setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
+    guideDialog->resize(400, 300);
+    
+    // Create layout for the dialog
+    QVBoxLayout *dialogLayout = new QVBoxLayout(guideDialog);
+    
+    // Create close button positioned at top right
+    QHBoxLayout *topLayout = new QHBoxLayout();
+    topLayout->addStretch();
+    QPushButton *closeButton = new QPushButton("✕", guideDialog);
+    closeButton->setFixedSize(30, 30);
+    closeButton->setStyleSheet(
+        "QPushButton {"
+        "background-color: #e74c3c;"
+        "color: white;"
+        "border: none;"
+        "border-radius: 15px;"
+        "font-weight: bold;"
+        "font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "background-color: #c0392b;"
+        "}"
+        "QPushButton:pressed {"
+        "background-color: #a93226;"
+        "}"
+    );
+    topLayout->addWidget(closeButton);
+    dialogLayout->addLayout(topLayout);
+    
+    // Add guide content
+    QLabel *guideContent = new QLabel(guideDialog);
+    guideContent->setWordWrap(true);
+    guideContent->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    guideContent->setText(
+        "<h3>How to Play Peg Solitaire</h3>"
+        "<p><b>Objective:</b> Remove all pegs except one from the board.</p>"
+        "<p><b>Rules:</b></p>"
+        "<ul>"
+        "<li>Click on a peg to select it (it will turn gold)</li>"
+        "<li>Click on an empty hole to move the selected peg</li>"
+        "<li>You can only move by jumping over an adjacent peg</li>"
+        "<li>The jumped peg will be removed from the board</li>"
+        "<li>Moves can be made horizontally or vertically, not diagonally</li>"
+        "</ul>"
+        "<p><b>Controls:</b></p>"
+        "<ul>"
+        "<li><b>Undo:</b> Take back your last move</li>"
+        "<li><b>Reset:</b> Start the game over</li>"
+        "<li><b>Home:</b> Return to the main menu</li>"
+        "</ul>"
+        "<p><b>Tip:</b> Try to work towards the center of the board!</p>"
+    );
+    guideContent->setStyleSheet(
+        "QLabel {"
+        "color: #2c3e50;"
+        "background-color: #f8f9fa;"
+        "border: 1px solid #dee2e6;"
+        "border-radius: 8px;"
+        "padding: 15px;"
+        "font-size: 12px;"
+        "}"
+    );
+    
+    dialogLayout->addWidget(guideContent);
+    
+    // Connect close button
+    connect(closeButton, &QPushButton::clicked, guideDialog, &QDialog::accept);
+    
+    // Show the dialog
+    guideDialog->exec();
+    
+    // Clean up
+    guideDialog->deleteLater();
 }
