@@ -12,8 +12,6 @@ enum class BoardType
     English,
     European,
     Cross,
-    Triangular,
-    Star
     // Add other board types here
 };
 
@@ -86,8 +84,6 @@ private:
     void setupEnglishStandard();
     void setupEuropeanStandard();
     void setupCross();
-    void setupTriangular();
-    void setupStar();
 
     // Board data
     QVector<QVector<PegState>> grid;

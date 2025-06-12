@@ -84,13 +84,6 @@ void MainWindow::startGame(BoardType boardType)
         case BoardType::Cross:
             currentBoardModel = new Board(BoardType::Cross, this);
             break;
-        case BoardType::Star:
-            currentBoardModel = new Board(BoardType::Star, this);
-            break;
-        case BoardType::Triangular:
-            currentBoardModel = new Board(BoardType::Triangular, this);
-            break;
-        // Add other board types here
         default:
             qDebug() << "Main window: Unknown or unsupported board type (enum):" << static_cast<int>(boardType);
             currentBoardModel = new Board(BoardType::English, this); // Fallback

@@ -32,12 +32,6 @@ void Board::initializeBoard(BoardType boardType)
         case BoardType::Cross:
             setupCross();
             break;
-        case BoardType::Star:
-            setupStar();
-            break;
-        case BoardType::Triangular:
-            setupTriangular();
-            break;
         default:
             qWarning() << "Unknown or unsupported board type:" << static_cast<int>(boardType);
             setupEnglishStandard(); // Default fallback
@@ -80,87 +74,35 @@ bool Board::isValidPosition(Position pos) const
 {
     if (pos.row < 0 || pos.row >= rows)
         return false;
-
-    if (currentBoardType == BoardType::Triangular)
-    {
-        // For triangular, col is valid from 0 up to row index
-        return pos.col >= 0 && pos.col <= pos.row;
-    }
-    else
-    {
-        // For rectangular boards (including star)
-        return pos.col >= 0 && pos.col < cols;
-    }
+    return pos.col >= 0 && pos.col < cols;
 }
 
 QVector<Move> Board::getValidMoves() const
 {
     QVector<Move> moves;
+    // Standard 4-direction moves for rectangular boards
+    int dr[] = {-1, 1, 0, 0};
+    int dc[] = {0, 0, -1, 1};
 
-    if (currentBoardType == BoardType::Triangular
-     || currentBoardType == BoardType::Star)
+    for (int r = 0; r < rows; ++r)
     {
-        // Define 6 directions for triangular board
-        QVector<QPair<Position, Position>> directions;
-        
-        // Horizontal
-        directions.append(qMakePair(Position{0, -1}, Position{0, -2}));
-        directions.append(qMakePair(Position{0, 1}, Position{0, 2}));
-        // Diagonal Up
-        directions.append(qMakePair(Position{-1, -1}, Position{-2, -2}));
-        directions.append(qMakePair(Position{-1, 0}, Position{-2, 0}));
-        // Diagonal Down
-        directions.append(qMakePair(Position{1, 0}, Position{2, 0}));
-        directions.append(qMakePair(Position{1, 1}, Position{2, 2}));
-
-        for (int r = 0; r < rows; ++r)
+        for (int c = 0; c < cols; ++c)
         {
-            for (int c = 0; c < cols; ++c)
+            if (getPegState({r, c}) == PegState::Peg)
             {
-                Position from(r, c);
-                if (getPegState(from) == PegState::Peg)
+                for (int i = 0; i < 4; ++i)
                 {
-                    for (const auto &dir : directions)
-                    {
-                        Position jumped(from.row + dir.first.row, from.col + dir.first.col);
-                        Position to(from.row + dir.second.row, from.col + dir.second.col);
+                    Position jumped(r + dr[i], c + dc[i]);
+                    Position to(r + 2 * dr[i], c + 2 * dc[i]);
 
-                        if (getPegState(jumped) == PegState::Peg && getPegState(to) == PegState::Empty)
-                        {
-                            moves.append({from, jumped, to});
-                        }
+                    if (getPegState(jumped) == PegState::Peg && getPegState(to) == PegState::Empty)
+                    {
+                        moves.append({{r, c}, jumped, to});
                     }
                 }
             }
         }
     }
-    else
-    {
-        // Standard 4-direction moves for rectangular boards
-        int dr[] = {-1, 1, 0, 0};
-        int dc[] = {0, 0, -1, 1};
-
-        for (int r = 0; r < rows; ++r)
-        {
-            for (int c = 0; c < cols; ++c)
-            {
-                if (getPegState({r, c}) == PegState::Peg)
-                {
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        Position jumped(r + dr[i], c + dc[i]);
-                        Position to(r + 2 * dr[i], c + 2 * dc[i]);
-
-                        if (getPegState(jumped) == PegState::Peg && getPegState(to) == PegState::Empty)
-                        {
-                            moves.append({{r, c}, jumped, to});
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
     return moves;
 }
 
@@ -172,40 +114,18 @@ bool Board::performMove(const Move &move)
         getPegState(move.to) == PegState::Empty)
     {
         bool validJumpPath = false;
-
-        if (currentBoardType == BoardType::Triangular)
+        // Standard rectangular jump validation
+        int dr[] = {-1, 1, 0, 0};
+        int dc[] = {0, 0, -1, 1};
+        for (int i = 0; i < 4; ++i)
         {
-            // Check if it's a valid triangular jump
-            int dr = move.to.row - move.from.row;
-            int dc = move.to.col - move.from.col;
-            int jr = move.jumped.row - move.from.row;
-            int jc = move.jumped.col - move.from.col;
-
-            // Valid triangular jumps
-            if ((dr == 0 && abs(dc) == 2 && jc == dc/2) ||  // Horizontal
-                (dr == -2 && dc == -2 && jr == -1 && jc == -1) || // Diagonal up-left
-                (dr == -2 && dc == 0 && jr == -1 && jc == 0) ||   // Diagonal up-right
-                (dr == 2 && dc == 0 && jr == 1 && jc == 0) ||     // Diagonal down-left
-                (dr == 2 && dc == 2 && jr == 1 && jc == 1))       // Diagonal down-right
+            if (move.jumped.row == move.from.row + dr[i] &&
+                move.jumped.col == move.from.col + dc[i] &&
+                move.to.row == move.from.row + 2 * dr[i] &&
+                move.to.col == move.from.col + 2 * dc[i])
             {
                 validJumpPath = true;
-            }
-        }
-        else
-        {
-            // Standard rectangular jump validation
-            int dr[] = {-1, 1, 0, 0};
-            int dc[] = {0, 0, -1, 1};
-            for (int i = 0; i < 4; ++i)
-            {
-                if (move.jumped.row == move.from.row + dr[i] &&
-                    move.jumped.col == move.from.col + dc[i] &&
-                    move.to.row == move.from.row + 2 * dr[i] &&
-                    move.to.col == move.from.col + 2 * dc[i])
-                {
-                    validJumpPath = true;
-                    break;
-                }
+                break;
             }
         }
 
