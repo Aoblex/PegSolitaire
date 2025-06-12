@@ -9,15 +9,13 @@
 
 void Board::setupEnglishStandard()
 {
-    rows = 7;
-    cols = 7;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
         grid[i].fill(PegState::Blocked, cols);
     }
 
-    int starLayout[7][7] = {
+    int starLayout[rows][cols] = {
         {-1, -1,  1,  1,  1, -1, -1},
         {-1, -1,  1,  1,  1, -1, -1},
         { 1,  1,  1,  1,  1,  1,  1},
@@ -53,15 +51,13 @@ void Board::setupEnglishStandard()
 
 void Board::setupEuropeanStandard()
 {
-    rows = 7;
-    cols = 7;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
         grid[i].fill(PegState::Blocked, cols);
     }
 
-    int starLayout[7][7] = {
+    int starLayout[rows][cols] = {
         {-1, -1,  1,  1,  1, -1, -1},
         {-1,  1,  1,  1,  1,  1, -1},
         { 1,  1,  1,  0,  1,  1,  1},
@@ -96,15 +92,13 @@ void Board::setupEuropeanStandard()
 }
 
 void Board::setupCross() {
-    rows = 7;
-    cols = 7;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
         grid[i].fill(PegState::Blocked, cols);
     }
 
-    int starLayout[7][7] = {
+    int starLayout[rows][cols] = {
         {-1, -1,  1,  1,  1, -1, -1},
         {-1,  1,  1,  0,  1,  1, -1},
         { 1,  1,  1,  0,  1,  1,  1},
@@ -112,7 +106,8 @@ void Board::setupCross() {
         { 1,  1,  1,  0,  1,  1,  1},
         {-1,  1,  1,  0,  1,  1, -1},
         {-1, -1,  1,  1,  1, -1, -1},
-    };    pegCount = 0;
+    };
+    pegCount = 0;
     for (int r = 0; r < rows; ++r)
     {
         for (int c = 0; c < cols; ++c)
@@ -141,8 +136,6 @@ void Board::setupCross() {
 
 void Board::setupAntiPeg() 
 {
-    rows = 7;
-    cols = 7;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
@@ -150,7 +143,7 @@ void Board::setupAntiPeg()
     }
 
     // Anti-peg mode: English board layout but with only center peg initially
-    int antiPegLayout[7][7] = {
+    int antiPegLayout[rows][cols] = {
         {-1, -1,  0,  0,  0, -1, -1},
         {-1, -1,  0,  0,  0, -1, -1},
         { 0,  0,  0,  0,  0,  0,  0},
@@ -158,7 +151,8 @@ void Board::setupAntiPeg()
         { 0,  0,  0,  0,  0,  0,  0},
         {-1, -1,  0,  0,  0, -1, -1},
         {-1, -1,  0,  0,  0, -1, -1},
-    };    pegCount = 0;
+    };
+    pegCount = 0;
     for (int r = 0; r < rows; ++r)
     {
         for (int c = 0; c < cols; ++c)

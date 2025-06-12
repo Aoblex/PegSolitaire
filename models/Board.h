@@ -104,8 +104,8 @@ private:
     void setupCross();
     void setupAntiPeg();  // Anti-peg mode setup    // Board data
     QVector<QVector<PegState>> grid;
-    int rows;
-    int cols;
+    const int rows = 7;
+    const int cols = 7;
     int pegCount;
     Position startingPosition; // The position where the game started (empty for normal, peg for anti-peg)
 
