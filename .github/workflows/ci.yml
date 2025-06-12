@@ -32,10 +32,10 @@ jobs:
         target: desktop
         arch: win64_msvc2019_64
         modules: 'qtbase qttools'
-        cache: true
-
-    - name: Setup CMake
-      uses: cmake-js/get-cmake@latest
+        cache: true    - name: Setup CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.28.x'
 
     - name: Configure CMake
       run: |
