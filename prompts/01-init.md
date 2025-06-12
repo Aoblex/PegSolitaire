@@ -10,7 +10,7 @@ You need to implement the Peg Solitaire game in C++ with the Qt6 library and use
 
 2. Start:
 
-   - The start page contains different kinds of boards for selection, like `classic`, `star`, `European`, `cross`, etc.;
+   - The start page contains different kinds of boards for selection, like `classic`, `star`, `Diamond`, `cross`, etc.;
    - Press `esc` or click the back button to return to homepage;
 
 3. Settings:

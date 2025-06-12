@@ -24,20 +24,20 @@ void Board::initializeBoard(BoardType boardType)
     switch (boardType)
     {
         case BoardType::English:
-            setupEnglishStandard();
+            setupEnglish();
             break;
-        case BoardType::European:
-            setupEuropeanStandard();
+        case BoardType::Diamond:
+            setupDiamond();
             break;
-        case BoardType::Cross:
-            setupCross();
+        case BoardType::Square:
+            setupSquare();
             break;
         case BoardType::AntiPeg:
             setupAntiPeg();
             break;
         default:
             qWarning() << "Unknown or unsupported board type:" << static_cast<int>(boardType);
-            setupEnglishStandard(); // Default fallback
+            setupEnglish(); // Default fallback
             break;
     }
 }
@@ -261,11 +261,6 @@ BoardType Board::getBoardType() const
 bool Board::isAntiPegMode() const
 {
     return currentBoardType == BoardType::AntiPeg;
-}
-
-Position Board::getStartingPosition() const
-{
-    return startingPosition;
 }
 
 bool Board::isWinningState() const

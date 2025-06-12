@@ -7,8 +7,9 @@
 #include <QVector>
 #include <QDebug>
 
-void Board::setupEnglishStandard()
+void Board::setupEnglish()
 {
+    rows = 7, cols = 7;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
@@ -26,7 +27,6 @@ void Board::setupEnglishStandard()
     };
 
     pegCount = 0;
-    startingPosition = Position(3, 3); // Center position for English board
     for (int r = 0; r < rows; ++r)
     {
         for (int c = 0; c < cols; ++c)
@@ -48,8 +48,9 @@ void Board::setupEnglishStandard()
     }
 }
 
-void Board::setupEuropeanStandard()
+void Board::setupDiamond()
 {
+    rows = 8, cols = 7;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
@@ -57,17 +58,17 @@ void Board::setupEuropeanStandard()
     }
 
     int starLayout[rows][cols] = {
-        {-1, -1,  1,  1,  1, -1, -1},
-        {-1,  1,  1,  1,  1,  1, -1},
-        { 1,  1,  1,  0,  1,  1,  1},
-        { 1,  1,  1,  1,  1,  1,  1},
-        { 1,  1,  1,  1,  1,  1,  1},
-        {-1,  1,  1,  1,  1,  1, -1},
-        {-1, -1,  1,  1,  1, -1, -1},
+        { -1, -1, -1,  1, -1, -1, -1},
+        { -1, -1,  1,  1,  1, -1, -1},
+        { -1,  1,  1,  1,  1,  1, -1},
+        {  1,  1,  1,  0,  1,  1,  1},
+        {  1,  1,  1,  1,  1,  1,  1},
+        { -1,  1,  1,  1,  1,  1, -1},
+        { -1, -1,  1,  1,  1, -1, -1},
+        { -1, -1, -1,  1, -1, -1, -1},
     };
 
     pegCount = 0;
-    startingPosition = Position(2, 3);
     for (int r = 0; r < rows; ++r)
     {
         for (int c = 0; c < cols; ++c)
@@ -90,7 +91,9 @@ void Board::setupEuropeanStandard()
     }
 }
 
-void Board::setupCross() {
+void Board::setupSquare()
+{
+    rows = 6, cols = 6;
     grid.resize(rows);
     for (int i = 0; i < rows; ++i)
     {
@@ -98,16 +101,14 @@ void Board::setupCross() {
     }
 
     int starLayout[rows][cols] = {
-        {-1, -1,  1,  1,  1, -1, -1},
-        {-1,  1,  1,  0,  1,  1, -1},
-        { 1,  1,  1,  0,  1,  1,  1},
-        { 1,  0,  0,  0,  0,  0,  1},
-        { 1,  1,  1,  0,  1,  1,  1},
-        {-1,  1,  1,  0,  1,  1, -1},
-        {-1, -1,  1,  1,  1, -1, -1},
+        { 1,  1,  1,  1,  1,  1},
+        { 1,  1,  1,  1,  1,  1},
+        { 1,  1,  1,  0,  1,  1},
+        { 1,  1,  1,  1,  1,  1},
+        { 1,  1,  1,  1,  1,  1},
+        { 1,  1,  1,  1,  1,  1},
     };
     pegCount = 0;
-    startingPosition = Position(2, 3);
     for (int r = 0; r < rows; ++r)
     {
         for (int c = 0; c < cols; ++c)
@@ -149,7 +150,6 @@ void Board::setupAntiPeg()
         {-1, -1,  0,  0,  0, -1, -1},
     };
     pegCount = 0;
-    startingPosition = Position(3, 3); // Center position for anti-peg board
     for (int r = 0; r < rows; ++r)
     {
         for (int c = 0; c < cols; ++c)

@@ -12,8 +12,8 @@
 enum class BoardType
 {
     English,
-    European,
-    Cross,
+    Diamond,
+    Square,
     AntiPeg,  // Anti-peg mode: start with one peg, fill the board
     // Add other board types here
 };
@@ -86,13 +86,7 @@ public:
      * @return True if the board is in anti-peg mode
      */
     bool isAntiPegMode() const;
-    
-    /**
-     * @brief Get the starting position of the board
-     * @return The starting position where the game began
-     */
-    Position getStartingPosition() const;
-    
+   
     /**
      * @brief Check if the current board state represents a win
      * @return True if the board is in a winning state
@@ -113,15 +107,14 @@ public:
 
 private:
     // Board setup methods
-    void setupEnglishStandard();
-    void setupEuropeanStandard();
-    void setupCross();
+    void setupEnglish();
+    void setupDiamond();
+    void setupSquare();
     void setupAntiPeg();  // Anti-peg mode setup    // Board data
     QVector<QVector<PegState>> grid;
-    static constexpr int rows = 7;
-    static constexpr int cols = 7;
+    int rows;
+    int cols;
     int pegCount;
-    Position startingPosition; // The position where the game started (empty for normal, peg for anti-peg)
 
     /**
      * @brief Convert board state to bit string in specified traversal order

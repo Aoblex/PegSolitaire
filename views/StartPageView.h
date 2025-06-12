@@ -30,9 +30,9 @@ private:
     // Column 1: Classic Mode
     QVBoxLayout *classicModeLayout;
     QLabel *classicModeLabel;
-    QPushButton *classicEnglishButton;
-    QPushButton *classicEuropeanButton;
-    QPushButton *classicCrossButton;
+    QPushButton *EnglishButton;
+    QPushButton *DiamondButton;
+    QPushButton *SquareButton;
 
     // Column 2: Special Game Mode
     QVBoxLayout *specialModeLayout;

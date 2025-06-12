@@ -78,11 +78,11 @@ void MainWindow::startGame(BoardType boardType)
         case BoardType::English:
             currentBoardModel = new Board(BoardType::English, this);
             break;
-        case BoardType::European:
-            currentBoardModel = new Board(BoardType::European, this);
+        case BoardType::Diamond:
+            currentBoardModel = new Board(BoardType::Diamond, this);
             break;
-        case BoardType::Cross:
-            currentBoardModel = new Board(BoardType::Cross, this);
+        case BoardType::Square:
+            currentBoardModel = new Board(BoardType::Square, this);
             break;
         case BoardType::AntiPeg:
             currentBoardModel = new Board(BoardType::AntiPeg, this);

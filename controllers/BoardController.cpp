@@ -244,7 +244,7 @@ void BoardController::onSuggestMoveClicked()
     
     // Show loading circle with appropriate message
     if (loadingCircle && boardView) {
-        loadingCircle->setMessage("Searching for winning move...");
+        loadingCircle->setMessage("Searching for winning move, this may take a while...");
         loadingCircle->resize(boardView->size());
         loadingCircle->startAnimation();
     }
@@ -323,16 +323,6 @@ void BoardController::checkGameStatus()
         }
     }
     else {
-        // Normal mode: check for lose condition
-        if (pegCount == 1 && !boardModel->isWinningState()) {
-            // One peg left but not in starting position
-            Position startPos = boardModel->getStartingPosition();
-            qDebug() << "BoardController: One peg remains, but not at starting position (" << startPos.row << "," << startPos.col << ")";
-            emit informationUpdated(QString("Game complete!\n1 peg remaining\nBut not at starting position (%1,%2)").arg(startPos.row).arg(startPos.col));
-            emit gameOver();
-            return;
-        }
-        
         // Check for lose condition: no valid moves available (and more than 1 peg)
         if (!hasValidMoves && pegCount > 1) {
             qDebug() << "BoardController: Game over! No valid moves available. Final peg count:" << pegCount;

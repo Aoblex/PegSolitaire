@@ -29,17 +29,17 @@ StartPageView::StartPageView(QWidget *parent)
     classicModeLabel = new QLabel("Classic Mode", this);
     classicModeLabel->setFont(titleFont); // Reuse title font for section headers
     classicModeLayout->addWidget(classicModeLabel, 0, Qt::AlignHCenter);
-    classicEnglishButton = new QPushButton("English Board", this);
-    classicEuropeanButton = new QPushButton("European Board", this);
-    classicCrossButton = new QPushButton("Cross Board", this);
-    
+    EnglishButton = new QPushButton("English Board", this);
+    DiamondButton = new QPushButton("Diamond Board", this);
+    SquareButton = new QPushButton("Square Board", this);
+
     // Apply game mode button styles
-    ButtonStyles::applyGameModeStyle(classicEnglishButton);
-    ButtonStyles::applyGameModeStyle(classicEuropeanButton);
-    ButtonStyles::applyGameModeStyle(classicCrossButton);
-    classicModeLayout->addWidget(classicEnglishButton, 0, Qt::AlignHCenter);
-    classicModeLayout->addWidget(classicEuropeanButton, 0, Qt::AlignHCenter);
-    classicModeLayout->addWidget(classicCrossButton, 0, Qt::AlignHCenter);
+    ButtonStyles::applyGameModeStyle(EnglishButton);
+    ButtonStyles::applyGameModeStyle(DiamondButton);
+    ButtonStyles::applyGameModeStyle(SquareButton);
+    classicModeLayout->addWidget(EnglishButton, 0, Qt::AlignHCenter);
+    classicModeLayout->addWidget(DiamondButton, 0, Qt::AlignHCenter);
+    classicModeLayout->addWidget(SquareButton, 0, Qt::AlignHCenter);
     classicModeLayout->addStretch(); // Pushes buttons to the top
     columnsLayout->addLayout(classicModeLayout);
 
@@ -71,12 +71,12 @@ StartPageView::StartPageView(QWidget *parent)
     connect(backButton, &QPushButton::clicked, this, &StartPageView::backClicked);
 
     // Classic Mode Buttons
-    connect(classicEnglishButton, &QPushButton::clicked, this, [this]()
+    connect(EnglishButton, &QPushButton::clicked, this, [this]()
             { emit gameModeSelected(BoardType::English); });
-    connect(classicEuropeanButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::European); });
-    connect(classicCrossButton, &QPushButton::clicked, this, [this]()
-            { emit gameModeSelected(BoardType::Cross); });
+    connect(DiamondButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected(BoardType::Diamond); });
+    connect(SquareButton, &QPushButton::clicked, this, [this]()
+            { emit gameModeSelected(BoardType::Square); });
 
     // Special Mode Buttons
     connect(specialAntiPegButton, &QPushButton::clicked, this, [this]()
