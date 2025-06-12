@@ -170,7 +170,7 @@ void BoardController::onSuggestMoveClicked()
     }
     
     Move suggestedMove = getSuggestedMove();
-      if (suggestedMove.from.row != -1) {
+    if (suggestedMove.from.row != -1) {
         qDebug() << "BoardController: Suggesting winning move from (" << suggestedMove.from.row << "," << suggestedMove.from.col 
                  << ") to (" << suggestedMove.to.row << "," << suggestedMove.to.col << ")";
         emit informationUpdated(QString("Suggested winning move:\nFrom (%1,%2) to (%3,%4)\nThis move guarantees victory!")
@@ -186,8 +186,8 @@ void BoardController::onSuggestMoveClicked()
         
         emit highlightMovesSignal(currentValidMoves);
     } else {
-        qDebug() << "BoardController: No winning moves available - dead game";
-        emit informationUpdated("No winning moves available!\nThis is a dead game state.\nNo path to victory exists.");
+        qDebug() << "BoardController: No winning moves found";
+        emit informationUpdated("💀 No winning moves found or current state too complicated!\nPlease try a different strategy.");
         // The deadGameDetected signal will be emitted by getStrategicMove()
     }
 }
