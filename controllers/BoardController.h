@@ -140,13 +140,18 @@ private:
      * @param direction Direction to search (0=up, 1=left, 2=down, 3=right)
      * @return Position of the nearest peg, or invalid position if none found
      */
-    Position findNearestPeg(int direction);
-
-    /**
+    Position findNearestPeg(int direction);    /**
      * @brief Find the center position of the board
      * @return Center position of the board
      */
     Position getBoardCenter();
+    
+    /**
+     * @brief Find the nearest peg in a specific direction using comprehensive search
+     * @param direction Direction to search (0=up, 1=left, 2=down, 3=right)
+     * @return Position of the nearest peg in that direction, or invalid position if none found
+     */
+    Position findNearestPegInDirection(int direction);
 
     // Keyboard navigation state
     Position currentKeyboardPosition;

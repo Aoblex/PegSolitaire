@@ -326,7 +326,7 @@ Position BoardController::findNearestPeg(int direction)
 
     Position searchPos = currentKeyboardPosition;
     
-    // Search in the specified direction
+    // First, search in the specified direction from current position
     for (int i = 1; i < qMax(boardModel->getRows(), boardModel->getCols()); ++i) {
         searchPos.row += deltaRow;
         searchPos.col += deltaCol;
@@ -344,40 +344,23 @@ Position BoardController::findNearestPeg(int direction)
         }
     }
 
-    // If no peg found in that direction, wrap around and search from the opposite edge
-    Position wrapPos;
-    switch (direction) {
-        case 0: // Up - start from bottom
-            wrapPos = Position(boardModel->getRows() - 1, currentKeyboardPosition.col);
-            break;
-        case 1: // Left - start from right
-            wrapPos = Position(currentKeyboardPosition.row, boardModel->getCols() - 1);
-            break;
-        case 2: // Down - start from top
-            wrapPos = Position(0, currentKeyboardPosition.col);
-            break;
-        case 3: // Right - start from left
-            wrapPos = Position(currentKeyboardPosition.row, 0);
-            break;
+    // If no peg found in that direction, search the entire board systematically
+    // We'll search in a spiral pattern starting from the current position
+    Position bestPeg = findNearestPegInDirection(direction);
+    if (bestPeg.row != -1 && bestPeg.col != -1) {
+        currentKeyboardPosition = bestPeg;
+        return bestPeg;
     }
-    
-    // Search from wrapped position
-    searchPos = wrapPos;
-    for (int i = 0; i < qMax(boardModel->getRows(), boardModel->getCols()); ++i) {
-        // Check bounds
-        if (searchPos.row < 0 || searchPos.row >= boardModel->getRows() ||
-            searchPos.col < 0 || searchPos.col >= boardModel->getCols()) {
-            break;
+
+    // If still no peg found, find any peg on the board
+    for (int r = 0; r < boardModel->getRows(); ++r) {
+        for (int c = 0; c < boardModel->getCols(); ++c) {
+            Position testPos(r, c);
+            if (boardModel->getPegState(testPos) == PegState::Peg) {
+                currentKeyboardPosition = testPos;
+                return testPos;
+            }
         }
-        
-        // Check if there's a peg at this position
-        if (boardModel->getPegState(searchPos) == PegState::Peg) {
-            currentKeyboardPosition = searchPos;
-            return searchPos;
-        }
-        
-        searchPos.row += deltaRow;
-        searchPos.col += deltaCol;
     }
 
     return Position(-1, -1); // No peg found
@@ -412,4 +395,71 @@ Position BoardController::getBoardCenter()
     }
     
     return Position(centerRow, centerCol);
+}
+
+Position BoardController::findNearestPegInDirection(int direction)
+{
+    if (!boardModel) {
+        return Position(-1, -1);
+    }
+
+    Position currentPos = currentKeyboardPosition;
+    Position bestPeg(-1, -1);
+    double bestDistance = -1;
+
+    // Search all pegs on the board and find the best one in the specified direction
+    for (int r = 0; r < boardModel->getRows(); ++r) {
+        for (int c = 0; c < boardModel->getCols(); ++c) {
+            Position testPos(r, c);
+            
+            // Skip if not a peg or if it's the current position
+            if (boardModel->getPegState(testPos) != PegState::Peg || 
+                (testPos.row == currentPos.row && testPos.col == currentPos.col)) {
+                continue;
+            }
+
+            // Check if this peg is in the desired direction
+            bool isInDirection = false;
+            double distance = 0;
+            
+            switch (direction) {
+                case 0: // Up
+                    if (testPos.row < currentPos.row) {
+                        isInDirection = true;
+                        // Prioritize pegs directly above, then by distance
+                        distance = (currentPos.row - testPos.row) + abs(testPos.col - currentPos.col) * 0.1;
+                    }
+                    break;
+                case 1: // Left
+                    if (testPos.col < currentPos.col) {
+                        isInDirection = true;
+                        // Prioritize pegs directly to the left, then by distance
+                        distance = (currentPos.col - testPos.col) + abs(testPos.row - currentPos.row) * 0.1;
+                    }
+                    break;
+                case 2: // Down
+                    if (testPos.row > currentPos.row) {
+                        isInDirection = true;
+                        // Prioritize pegs directly below, then by distance
+                        distance = (testPos.row - currentPos.row) + abs(testPos.col - currentPos.col) * 0.1;
+                    }
+                    break;
+                case 3: // Right
+                    if (testPos.col > currentPos.col) {
+                        isInDirection = true;
+                        // Prioritize pegs directly to the right, then by distance
+                        distance = (testPos.col - currentPos.col) + abs(testPos.row - currentPos.row) * 0.1;
+                    }
+                    break;
+            }
+
+            // If this peg is in the direction and is the closest so far
+            if (isInDirection && (bestDistance < 0 || distance < bestDistance)) {
+                bestPeg = testPos;
+                bestDistance = distance;
+            }
+        }
+    }
+
+    return bestPeg;
 }
