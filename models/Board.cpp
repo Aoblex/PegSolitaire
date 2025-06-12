@@ -3,13 +3,13 @@
 #include <stdexcept>
 #include <QDebug>
 
-Board::Board(QObject *parent) : QObject(parent), rows(0), cols(0), pegCount(0)
+Board::Board(QObject *parent) : QObject(parent), pegCount(0)
 {
     // Default constructor, initialize with a default board type
     initializeBoard(BoardType::English);
 }
 
-Board::Board(BoardType boardType, QObject *parent) : QObject(parent), rows(0), cols(0), pegCount(0)
+Board::Board(BoardType boardType, QObject *parent) : QObject(parent), pegCount(0)
 {
     initializeBoard(boardType);
 }
