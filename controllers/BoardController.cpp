@@ -166,7 +166,7 @@ void BoardController::onSuggestMoveClicked()
     Move suggestedMove = getSuggestedMove();
     
     if (suggestedMove.from.row != -1) {
-        qDebug() << "BoardController: Suggesting move from (" << suggestedMove.from.row << "," << suggestedMove.from.col 
+        qDebug() << "BoardController: Suggesting winning move from (" << suggestedMove.from.row << "," << suggestedMove.from.col 
                  << ") to (" << suggestedMove.to.row << "," << suggestedMove.to.col << ")";
         
         // Clear current selection and highlight suggested move
@@ -178,7 +178,8 @@ void BoardController::onSuggestMoveClicked()
         
         emit highlightMovesSignal(currentValidMoves);
     } else {
-        qDebug() << "BoardController: No moves available for suggestion";
+        qDebug() << "BoardController: No winning moves available - dead game";
+        // The deadGameDetected signal will be emitted by getStrategicMove()
     }
 }
 
@@ -257,12 +258,141 @@ Move BoardController::getSuggestedMove()
         return {Position{-1, -1}, Position{-1, -1}, Position{-1, -1}};
     }
     
-    QVector<Move> allMoves = boardModel->getValidMoves();
-    
-    if (!allMoves.isEmpty()) {
-        return allMoves.first();
+    // Only return strategic moves that guarantee a win
+    Move strategicMove = getStrategicMove();
+    return strategicMove; // This will be invalid if no winning solution exists
+}
+
+Move BoardController::getStrategicMove()
+{
+    if (!boardModel) {
+        return {Position{-1, -1}, Position{-1, -1}, Position{-1, -1}};
     }
+
+    // Check if board is solvable first
+    if (!isBoardSolvable()) {
+        qDebug() << "BoardController: Dead game detected - no winning solution exists";
+        emit deadGameDetected();
+        return {Position{-1, -1}, Position{-1, -1}, Position{-1, -1}};
+    }
+
+    // Find the best strategic move
+    return findBestStrategicMove();
+}
+
+bool BoardController::isBoardSolvable()
+{
+    if (!boardModel) {
+        return false;
+    }
+
+    // Create a copy of the board to test solvability
+    Board* testBoard = new Board(boardModel->getBoardType(), this);
     
+    // Copy current state
+    for (int r = 0; r < boardModel->getRows(); ++r) {
+        for (int c = 0; c < boardModel->getCols(); ++c) {
+            Position pos(r, c);
+            testBoard->setPegState(pos, boardModel->getPegState(pos));
+        }
+    }
+
+    bool solvable = solveBoard(testBoard, 0, 10); // Limit depth to prevent timeout
+    
+    testBoard->deleteLater();
+    return solvable;
+}
+
+bool BoardController::solveBoard(Board* board, int depth, int maxDepth)
+{
+    if (!board) {
+        return false;
+    }
+
+    // Check win condition
+    if (board->isAntiPegMode()) {
+        // Anti-peg mode: win when no more moves available
+        if (board->getValidMoves().isEmpty()) {
+            return true;
+        }
+    } else {
+        // Normal mode: win when only 1 peg remains
+        if (board->getPegCount() == 1) {
+            return true;
+        }
+    }
+
+    // Check if we've reached maximum depth
+    if (depth >= maxDepth) {
+        return false;
+    }
+
+    // Get all possible moves
+    QVector<Move> moves = board->getValidMoves();
+    if (moves.isEmpty()) {
+        return false; // No moves available and not in winning state
+    }
+
+    // Try each move recursively
+    for (const Move& move : moves) {
+        // Make the move
+        if (board->performMove(move)) {
+            // Recursively check if this leads to a solution
+            if (solveBoard(board, depth + 1, maxDepth)) {
+                // Undo the move before returning
+                board->undoLastMove();
+                return true;
+            }
+            // Undo the move and try next
+            board->undoLastMove();
+        }
+    }
+
+    return false; // No solution found from this state
+}
+
+Move BoardController::findBestStrategicMove()
+{
+    if (!boardModel) {
+        return {Position{-1, -1}, Position{-1, -1}, Position{-1, -1}};
+    }
+
+    QVector<Move> allMoves = boardModel->getValidMoves();
+    if (allMoves.isEmpty()) {
+        return {Position{-1, -1}, Position{-1, -1}, Position{-1, -1}};
+    }
+
+    // Test each move to see which ones lead to winning solutions
+    QVector<Move> winningMoves;
+    
+    for (const Move& move : allMoves) {
+        // Create a test board
+        Board* testBoard = new Board(boardModel->getBoardType(), this);
+        
+        // Copy current state
+        for (int r = 0; r < boardModel->getRows(); ++r) {
+            for (int c = 0; c < boardModel->getCols(); ++c) {
+                Position pos(r, c);
+                testBoard->setPegState(pos, boardModel->getPegState(pos));
+            }
+        }
+
+        // Try this move
+        if (testBoard->performMove(move)) {
+            // Check if this state is still solvable
+            if (solveBoard(testBoard, 0, 12)) { // Reduced depth for performance
+                winningMoves.append(move);
+            }
+        }
+        
+        testBoard->deleteLater();
+    }    // Return the first winning move found, or invalid move if none guarantee win
+    if (!winningMoves.isEmpty()) {
+        qDebug() << "BoardController: Found" << winningMoves.size() << "winning moves";
+        return winningMoves.first();
+    }
+
+    qDebug() << "BoardController: No guaranteed winning moves found";
     return {Position{-1, -1}, Position{-1, -1}, Position{-1, -1}};
 }
 

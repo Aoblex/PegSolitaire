@@ -56,12 +56,15 @@ signals:
     /**
      * @brief Emitted when the game is over (no more valid moves)
      */
-    void gameOver();
-
-    /**
+    void gameOver();    /**
      * @brief Emitted when user requests to navigate back to home
      */
     void navigateToHome();
+    
+    /**
+     * @brief Emitted when the game is determined to be unwinnable
+     */
+    void deadGameDetected();
 
 public slots:
     /**
@@ -128,30 +131,55 @@ private:
     /**
      * @brief Check if the game is complete
      */
-    void checkGameStatus();
-      /**
+    void checkGameStatus();    /**
      * @brief Get a suggested move (first available move)
      * @return A suggested move, or invalid move if none available
      */
     Move getSuggestedMove();
+    
+    /**
+     * @brief Get a strategic move that leads to winning
+     * @return A strategic move, or invalid move if game is unwinnable
+     */
+    Move getStrategicMove();
 
     /**
      * @brief Find the nearest peg in the specified direction
      * @param direction Direction to search (0=up, 1=left, 2=down, 3=right)
      * @return Position of the nearest peg, or invalid position if none found
      */
-    Position findNearestPeg(int direction);    /**
+    Position findNearestPeg(int direction);/**
      * @brief Find the center position of the board
      * @return Center position of the board
      */
     Position getBoardCenter();
-    
-    /**
+      /**
      * @brief Find the nearest peg in a specific direction using comprehensive search
      * @param direction Direction to search (0=up, 1=left, 2=down, 3=right)
      * @return Position of the nearest peg in that direction, or invalid position if none found
      */
     Position findNearestPegInDirection(int direction);
+    
+    /**
+     * @brief Check if the current board state is solvable (can reach winning condition)
+     * @return True if the board is solvable, false otherwise
+     */
+    bool isBoardSolvable();
+    
+    /**
+     * @brief Solve the board using recursive backtracking to find winning path
+     * @param board Pointer to board to solve
+     * @param depth Current recursion depth for optimization
+     * @param maxDepth Maximum recursion depth to prevent timeout
+     * @return True if a solution exists from this state
+     */
+    bool solveBoard(Board* board, int depth = 0, int maxDepth = 20);
+    
+    /**
+     * @brief Find the best strategic move using minimax-like approach
+     * @return Best move that leads to winning, or invalid move if none exists
+     */
+    Move findBestStrategicMove();
 
     // Keyboard navigation state
     Position currentKeyboardPosition;
