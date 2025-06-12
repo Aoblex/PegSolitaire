@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(solitaire VERSION 0.1 LANGUAGES CXX)
+project(solitaire VERSION 1.0.0 LANGUAGES CXX)
+
+# Set build information
+set(PROJECT_DESCRIPTION "A beautiful Peg Solitaire game built with Qt6")
+set(PROJECT_HOMEPAGE_URL "https://github.com/yourusername/solitaire")
+set(PROJECT_COMPANY "Peg Solitaire Game")
+set(PROJECT_COPYRIGHT "Copyright (c) 2025 Peg Solitaire Game")
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -87,6 +93,10 @@ set_target_properties(solitaire PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
     OUTPUT_NAME "PegSolitaire"
+    
+    # Windows-specific version information
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
 include(GNUInstallDirs)

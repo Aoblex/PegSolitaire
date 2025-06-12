@@ -1,0 +1,237 @@
+name: Windows Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0, v1.2.3, etc.
+  release:
+    types: [published]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  QT_VERSION: 6.5.3
+  CMAKE_VERSION: 3.28.0
+  BUILD_TYPE: Release
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up MSVC
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ env.QT_VERSION }}
+        host: windows
+        target: desktop
+        arch: win64_msvc2019_64
+        dir: ${{ runner.temp }}
+        modules: 'qtbase qttools'
+        cache: true
+
+    - name: Setup CMake
+      uses: cmake-js/get-cmake@latest
+      with:
+        cmake-version: ${{ env.CMAKE_VERSION }}
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . `
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+          -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" `
+          -G "Visual Studio 17 2022" `
+          -A x64
+
+    - name: Build
+      run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+    - name: Install
+      run: cmake --install build --prefix install --config ${{ env.BUILD_TYPE }}
+
+    - name: Deploy Qt dependencies
+      run: |
+        # Create deployment directory
+        New-Item -ItemType Directory -Path "deploy" -Force
+        
+        # Copy the executable
+        Copy-Item "build\${{ env.BUILD_TYPE }}\PegSolitaire.exe" "deploy\"
+        
+        # Deploy Qt dependencies
+        & "${{ env.Qt6_DIR }}\bin\windeployqt.exe" `
+          --release `
+          --no-translations `
+          --no-system-d3d-compiler `
+          --no-opengl-sw `
+          --no-debug-info `
+          "deploy\PegSolitaire.exe"
+
+    - name: Copy additional resources
+      run: |
+        # Copy any additional resources if needed
+        if (Test-Path "resources") {
+          Copy-Item -Recurse "resources\*" "deploy\" -ErrorAction SilentlyContinue
+        }
+
+    - name: Create portable package
+      run: |
+        # Create a portable ZIP package
+        $version = if ($env:GITHUB_REF -match 'refs/tags/v(.*)') { $matches[1] } else { "latest" }
+        Compress-Archive -Path "deploy\*" -DestinationPath "PegSolitaire-Windows-x64-v$version.zip"
+
+    - name: Create installer (optional)
+      run: |
+        # Create NSIS installer script
+        $version = if ($env:GITHUB_REF -match 'refs/tags/v(.*)') { $matches[1] } else { "0.1.0" }
+        
+        @"
+        !define APP_NAME "Peg Solitaire"
+        !define APP_VERSION "$version"
+        !define APP_PUBLISHER "Peg Solitaire Game"
+        !define APP_EXECUTABLE "PegSolitaire.exe"
+        
+        !include "MUI2.nsh"
+        
+        Name "`${APP_NAME}"
+        OutFile "PegSolitaire-Setup-v`${APP_VERSION}.exe"
+        InstallDir "`$PROGRAMFILES64\`${APP_NAME}"
+        InstallDirRegKey HKCU "Software\`${APP_NAME}" ""
+        RequestExecutionLevel admin
+        
+        !define MUI_ICON "resources\icon.ico"
+        !define MUI_UNICON "resources\icon.ico"
+        
+        !insertmacro MUI_PAGE_WELCOME
+        !insertmacro MUI_PAGE_LICENSE "LICENSE"
+        !insertmacro MUI_PAGE_DIRECTORY
+        !insertmacro MUI_PAGE_INSTFILES
+        !insertmacro MUI_PAGE_FINISH
+        
+        !insertmacro MUI_UNPAGE_WELCOME
+        !insertmacro MUI_UNPAGE_CONFIRM
+        !insertmacro MUI_UNPAGE_INSTFILES
+        !insertmacro MUI_UNPAGE_FINISH
+        
+        !insertmacro MUI_LANGUAGE "English"
+        
+        Section "Main Application" SecMain
+          SetOutPath "`$INSTDIR"
+          File /r "deploy\*.*"
+          
+          CreateDirectory "`$SMPROGRAMS\`${APP_NAME}"
+          CreateShortcut "`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXECUTABLE}"
+          CreateShortcut "`$DESKTOP\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXECUTABLE}"
+          
+          WriteRegStr HKCU "Software\`${APP_NAME}" "" "`$INSTDIR"
+          WriteUninstaller "`$INSTDIR\Uninstall.exe"
+        SectionEnd
+        
+        Section "Uninstall"
+          Delete "`$INSTDIR\*.*"
+          RMDir /r "`$INSTDIR"
+          Delete "`$SMPROGRAMS\`${APP_NAME}\*.*"
+          RMDir "`$SMPROGRAMS\`${APP_NAME}"
+          Delete "`$DESKTOP\`${APP_NAME}.lnk"
+          DeleteRegKey HKCU "Software\`${APP_NAME}"
+        SectionEnd
+        "@ | Out-File -FilePath "installer.nsi" -Encoding UTF8
+
+    - name: Build installer
+      if: false  # Disabled for now, enable if you want NSIS installer
+      run: |
+        # Download and install NSIS
+        Invoke-WebRequest -Uri "https://prdownloads.sourceforge.net/nsis/nsis-3.09-setup.exe" -OutFile "nsis-setup.exe"
+        Start-Process -FilePath "nsis-setup.exe" -ArgumentList "/S" -Wait
+        
+        # Build installer
+        & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        $changelog = @"
+        ## What's New
+        
+        ### Features
+        - Beautiful Peg Solitaire game with multiple board types
+        - Intuitive mouse and keyboard controls
+        - Strategy hints with space key
+        - Win/lose detection with replay options
+        - Fullscreen mode support
+        - Modern Qt6-based interface
+        
+        ### Game Modes
+        - English (Classic)
+        - Diamond
+        - Square
+        - Anti-Peg
+        - Endgame (Random with guaranteed solution)
+        
+        ### Controls
+        - Mouse: Click to select and move pegs
+        - WASD: Navigate between pegs
+        - Arrow keys: Move selected peg
+        - Space: Show strategy hint
+        - ESC: Return to previous screen
+        
+        ### System Requirements
+        - Windows 10 or later (64-bit)
+        - 100 MB free disk space
+        
+        ### Installation
+        1. Download PegSolitaire-Windows-x64-v*.zip
+        2. Extract to desired location
+        3. Run PegSolitaire.exe
+        
+        No installation required - fully portable!
+        "@
+        
+        $changelog | Out-File -FilePath "CHANGELOG.md" -Encoding UTF8
+        echo "changelog<<EOF" >> $env:GITHUB_OUTPUT
+        echo $changelog >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: PegSolitaire-Windows-x64
+        path: |
+          PegSolitaire-Windows-x64-*.zip
+          deploy/
+        retention-days: 30
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          PegSolitaire-Windows-x64-*.zip
+        body: ${{ steps.changelog.outputs.changelog }}
+        name: Peg Solitaire ${{ github.ref_name }}
+        draft: false
+        prerelease: ${{ contains(github.ref_name, '-') }}
+        generate_release_notes: true
+        tag_name: ${{ github.ref_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload to release (manual dispatch)
+      if: github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          PegSolitaire-Windows-x64-*.zip
+        body: ${{ steps.changelog.outputs.changelog }}
+        name: Peg Solitaire Development Build
+        tag_name: dev-${{ github.sha }}
+        draft: true
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
