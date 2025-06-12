@@ -1,5 +1,6 @@
 #include "StartPageView.h"
 #include "models/Board.h" // Include BoardType definition
+#include "utils/ButtonStyles.h"
 #include <QFont>
 #include <QHBoxLayout> // Ensure this is included
 
@@ -31,9 +32,14 @@ StartPageView::StartPageView(QWidget *parent)
     classicEnglishButton = new QPushButton("English Board", this);
     classicEuropeanButton = new QPushButton("European Board", this);
     classicCrossButton = new QPushButton("Cross Board", this);
-    classicModeLayout->addWidget(classicEnglishButton);
-    classicModeLayout->addWidget(classicEuropeanButton);
-    classicModeLayout->addWidget(classicCrossButton);
+    
+    // Apply game mode button styles
+    ButtonStyles::applyGameModeStyle(classicEnglishButton);
+    ButtonStyles::applyGameModeStyle(classicEuropeanButton);
+    ButtonStyles::applyGameModeStyle(classicCrossButton);
+    classicModeLayout->addWidget(classicEnglishButton, 0, Qt::AlignHCenter);
+    classicModeLayout->addWidget(classicEuropeanButton, 0, Qt::AlignHCenter);
+    classicModeLayout->addWidget(classicCrossButton, 0, Qt::AlignHCenter);
     classicModeLayout->addStretch(); // Pushes buttons to the top
     columnsLayout->addLayout(classicModeLayout);
 
@@ -43,16 +49,20 @@ StartPageView::StartPageView(QWidget *parent)
     specialModeLabel->setFont(titleFont);
     specialModeLayout->addWidget(specialModeLabel, 0, Qt::AlignHCenter);
     specialAntiPegButton = new QPushButton("Anti-Peg Mode", this);
-    specialEndgameButton = new QPushButton("Endgame Scenarios", this);
-    specialModeLayout->addWidget(specialAntiPegButton);
-    specialModeLayout->addWidget(specialEndgameButton);
+    specialEndgameButton = new QPushButton("Endgame Mode", this);
+    
+    // Apply game mode button styles
+    ButtonStyles::applyGameModeStyle(specialAntiPegButton);
+    ButtonStyles::applyGameModeStyle(specialEndgameButton);
+
+    specialModeLayout->addWidget(specialAntiPegButton, 0, Qt::AlignHCenter);
+    specialModeLayout->addWidget(specialEndgameButton, 0, Qt::AlignHCenter);
     specialModeLayout->addStretch();
     columnsLayout->addLayout(specialModeLayout);
 
-    mainLayout->addLayout(columnsLayout);
-
-    // Back Button
+    mainLayout->addLayout(columnsLayout);    // Back Button
     backButton = new QPushButton("Back to Home", this);
+    ButtonStyles::applySecondaryStyle(backButton);
     mainLayout->addWidget(backButton, 0, Qt::AlignHCenter); // Center back button
 
     setLayout(mainLayout);

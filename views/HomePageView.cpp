@@ -1,4 +1,5 @@
 #include "HomePageView.h"
+#include "utils/ButtonStyles.h"
 #include <QFont>
 #include <QApplication>
 
@@ -11,12 +12,15 @@ HomePageView::HomePageView(QWidget *parent)
     titleFont.setPointSize(24);
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
-    titleLabel->setAlignment(Qt::AlignCenter);
-
-    // Buttons
+    titleLabel->setAlignment(Qt::AlignCenter);    // Buttons
     startButton = new QPushButton("Start", this);
     settingsButton = new QPushButton("Settings", this);
     quitButton = new QPushButton("Quit", this);
+
+    // Apply consistent button styles
+    ButtonStyles::applyPrimaryStyle(startButton);
+    ButtonStyles::applyPrimaryStyle(settingsButton);
+    ButtonStyles::applyPrimaryStyle(quitButton);
 
     // Layout
     mainLayout = new QVBoxLayout(this);

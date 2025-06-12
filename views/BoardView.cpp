@@ -1,4 +1,5 @@
 #include "BoardView.h"
+#include "utils/ButtonStyles.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QKeyEvent>
@@ -70,36 +71,17 @@ void BoardView::setupUI()
     boardWidget = new QWidget(this);
     boardWidget->setMinimumSize(400, 400);
     boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    mainLayout->addWidget(boardWidget, 1, Qt::AlignCenter); // Give most space to the board
-
-    // Control buttons layout
+    mainLayout->addWidget(boardWidget, 1, Qt::AlignCenter); // Give most space to the board    // Control buttons layout
     controlLayout = new QHBoxLayout();
     
     undoButton = new QPushButton("Undo", this);
     resetButton = new QPushButton("Reset", this);
     homeButton = new QPushButton("Home", this);
     
-    // Style the buttons
-    QString buttonStyle = "QPushButton {"
-                         "    background-color: #4CAF50;"
-                         "    border: none;"
-                         "    color: white;"
-                         "    padding: 8px 16px;"
-                         "    text-align: center;"
-                         "    font-size: 14px;"
-                         "    font-weight: bold;"
-                         "    border-radius: 4px;"
-                         "}"
-                         "QPushButton:hover {"
-                         "    background-color: #45a049;"
-                         "}"
-                         "QPushButton:pressed {"
-                         "    background-color: #3d8b40;"
-                         "}";
-    
-    undoButton->setStyleSheet(buttonStyle);
-    resetButton->setStyleSheet(buttonStyle);
-    homeButton->setStyleSheet(buttonStyle);
+    // Apply consistent button styles using ButtonStyles utility
+    ButtonStyles::applyControlStyle(undoButton);
+    ButtonStyles::applyControlStyle(resetButton);
+    ButtonStyles::applyControlStyle(homeButton);
     
     controlLayout->addWidget(undoButton);
     controlLayout->addWidget(resetButton);

@@ -37,6 +37,8 @@ set(PROJECT_SOURCES
         controllers/StartPageController.h
         controllers/SettingsPageController.cpp
         controllers/SettingsPageController.h
+        utils/ButtonStyles.cpp
+        utils/ButtonStyles.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

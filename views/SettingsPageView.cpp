@@ -1,4 +1,5 @@
 #include "SettingsPageView.h"
+#include "utils/ButtonStyles.h"
 #include <QFont>
 
 SettingsPageView::SettingsPageView(QWidget *parent)
@@ -17,6 +18,9 @@ SettingsPageView::SettingsPageView(QWidget *parent)
 
     // Back Button
     backButton = new QPushButton("Back to Home", this);
+    
+    // Apply consistent button styling
+    ButtonStyles::applySecondaryStyle(backButton);
 
     // Layout
     mainLayout = new QVBoxLayout(this);
