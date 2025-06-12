@@ -40,6 +40,12 @@ signals:
      */
     void navigateToHome();
 
+protected:
+    /**
+     * @brief Handle resize events to properly resize the guide overlay
+     */
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     // Main layout structure
     QVBoxLayout *mainLayout;
@@ -52,12 +58,14 @@ private:
       // Right side components
     QLabel *scoringBoardTitle;
     QLabel *pegCountLabel;
-    
-    // Control buttons (upper right)
+      // Control buttons (upper right)
     QPushButton *undoButton;
     QPushButton *resetButton;
     QPushButton *homeButton;
     QPushButton *guideButton;
+    
+    // Guide overlay
+    QWidget *guideOverlay;
     
     // Controller
     BoardController *boardController;

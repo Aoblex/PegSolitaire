@@ -4,6 +4,7 @@
 #include <QFont>
 #include <QDialog>
 #include <QMessageBox>
+#include <QResizeEvent>
 
 GameView::GameView(QWidget *parent)
     : QWidget(parent),
@@ -18,6 +19,7 @@ GameView::GameView(QWidget *parent)
       resetButton(nullptr),
       homeButton(nullptr),
       guideButton(nullptr),
+      guideOverlay(nullptr),
       boardController(nullptr)
 {
     setupUI();
@@ -174,19 +176,55 @@ void GameView::setBoard(Board *board)
 
 void GameView::showGuideDialog()
 {
-    // Create a custom dialog for the guide
-    QDialog *guideDialog = new QDialog(this);
-    guideDialog->setWindowTitle("Game Guide");
-    guideDialog->setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
-    guideDialog->resize(400, 300);
+    // If overlay already exists, just show it
+    if (guideOverlay) {
+        guideOverlay->show();
+        guideOverlay->raise();
+        return;
+    }
     
-    // Create layout for the dialog
-    QVBoxLayout *dialogLayout = new QVBoxLayout(guideDialog);
+    // Create overlay widget
+    guideOverlay = new QWidget(this);
+    guideOverlay->setStyleSheet(
+        "QWidget {"
+        "background-color: rgba(0, 0, 0, 150);" // Semi-transparent background
+        "}"
+    );
+    
+    // Create the content widget
+    QWidget *contentWidget = new QWidget(guideOverlay);
+    contentWidget->setFixedSize(500, 400);
+    contentWidget->setStyleSheet(
+        "QWidget {"
+        "background-color: #f8f9fa;"
+        "border: 2px solid #dee2e6;"
+        "border-radius: 12px;"
+        "}"
+    );
+    
+    // Create layout for the content
+    QVBoxLayout *contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(20, 15, 20, 20);
     
     // Create close button positioned at top right
     QHBoxLayout *topLayout = new QHBoxLayout();
+    
+    // Title
+    QLabel *titleLabel = new QLabel("How to Play", contentWidget);
+    titleLabel->setStyleSheet(
+        "QLabel {"
+        "color: #2c3e50;"
+        "font-size: 18px;"
+        "font-weight: bold;"
+        "background: transparent;"
+        "border: none;"
+        "}"
+    );
+    topLayout->addWidget(titleLabel);
+    
     topLayout->addStretch();
-    QPushButton *closeButton = new QPushButton("✕", guideDialog);
+    
+    QPushButton *closeButton = new QPushButton("✕", contentWidget);
     closeButton->setFixedSize(30, 30);
     closeButton->setStyleSheet(
         "QPushButton {"
@@ -205,50 +243,70 @@ void GameView::showGuideDialog()
         "}"
     );
     topLayout->addWidget(closeButton);
-    dialogLayout->addLayout(topLayout);
+    contentLayout->addLayout(topLayout);
     
     // Add guide content
-    QLabel *guideContent = new QLabel(guideDialog);
+    QLabel *guideContent = new QLabel(contentWidget);
     guideContent->setWordWrap(true);
     guideContent->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     guideContent->setText(
-        "<h3>How to Play Peg Solitaire</h3>"
-        "<p><b>Objective:</b> Remove all pegs except one from the board.</p>"
-        "<p><b>Rules:</b></p>"
-        "<ul>"
-        "<li>Click on a peg to select it (it will turn gold)</li>"
-        "<li>Click on an empty hole to move the selected peg</li>"
-        "<li>You can only move by jumping over an adjacent peg</li>"
-        "<li>The jumped peg will be removed from the board</li>"
-        "<li>Moves can be made horizontally or vertically, not diagonally</li>"
-        "</ul>"
+        "<p><b>Goal:</b> Remove all but one peg from the board.</p>"
+        "<p><b>How to play:</b></p>"
+        "<p>• Jump one peg over another into an empty hole. The peg that is jumped over is removed.</p>"
+        "<p>• Jumps can be made vertically or horizontally, but not diagonally.</p>"
+        "<p>• Click on a peg to select it, then click on a valid empty hole to move it. Or drag a peg to an empty hole.</p>"
         "<p><b>Controls:</b></p>"
-        "<ul>"
-        "<li><b>Undo:</b> Take back your last move</li>"
-        "<li><b>Reset:</b> Start the game over</li>"
-        "<li><b>Home:</b> Return to the main menu</li>"
-        "</ul>"
+        "<p>• <b>Undo:</b> Take back your last move</p>"
+        "<p>• <b>Reset:</b> Start the game over</p>"
+        "<p>• <b>Home:</b> Return to the main menu</p>"
         "<p><b>Tip:</b> Try to work towards the center of the board!</p>"
     );
     guideContent->setStyleSheet(
         "QLabel {"
         "color: #2c3e50;"
-        "background-color: #f8f9fa;"
-        "border: 1px solid #dee2e6;"
-        "border-radius: 8px;"
-        "padding: 15px;"
-        "font-size: 12px;"
+        "background: transparent;"
+        "border: none;"
+        "font-size: 13px;"
+        "line-height: 1.4;"
         "}"
     );
     
-    dialogLayout->addWidget(guideContent);
+    contentLayout->addWidget(guideContent);
     
-    // Connect close button
-    connect(closeButton, &QPushButton::clicked, guideDialog, &QDialog::accept);
+    // Position content widget in center of overlay
+    QVBoxLayout *overlayLayout = new QVBoxLayout(guideOverlay);
+    overlayLayout->setContentsMargins(0, 0, 0, 0);
+    overlayLayout->addStretch();
     
-    // Show the dialog
-    guideDialog->exec();
+    QHBoxLayout *centerLayout = new QHBoxLayout();
+    centerLayout->addStretch();
+    centerLayout->addWidget(contentWidget);
+    centerLayout->addStretch();
     
-    // Clean up
-    guideDialog->deleteLater();
+    overlayLayout->addLayout(centerLayout);
+    overlayLayout->addStretch();
+    
+    // Connect close button to hide overlay
+    connect(closeButton, &QPushButton::clicked, [this]() {
+        if (guideOverlay) {
+            guideOverlay->hide();
+        }
+    });
+    
+    // Make overlay fill the entire GameView
+    guideOverlay->resize(this->size());
+    
+    // Show the overlay
+    guideOverlay->show();
+    guideOverlay->raise();
+}
+
+void GameView::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    
+    // Resize the overlay to match the new size
+    if (guideOverlay && guideOverlay->isVisible()) {
+        guideOverlay->resize(this->size());
+    }
 }
