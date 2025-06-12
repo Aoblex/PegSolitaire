@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(solitaire VERSION 1.0.0 LANGUAGES CXX)
+project(solitaire VERSION 1.0.1 LANGUAGES CXX)
 
 # Set build information
 set(PROJECT_DESCRIPTION "A beautiful Peg Solitaire game built with Qt6")
