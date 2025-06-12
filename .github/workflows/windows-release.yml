@@ -34,7 +34,6 @@ jobs:
         target: desktop
         arch: win64_msvc2019_64
         dir: ${{ runner.temp }}
-        modules: 'qtbase qttools'
         cache: true
     - name: Setup CMake
       uses: jwlawson/actions-setup-cmake@v2
