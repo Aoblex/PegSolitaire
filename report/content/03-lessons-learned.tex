@@ -69,63 +69,10 @@ Implementing the solution-finding algorithm for Peg Solitaire offered valuable l
 Facing performance challenges with the naive implementation led to learning several important optimization strategies:
 
 \begin{itemize}
-    \item \textbf{Pattern Recognition}: Identifying board symmetries reduced the search space significantly. The recognition that rotating or flipping the board produces equivalent game states led to a major algorithmic improvement:
-    
-    \begin{verbatim}
-    Position Board::getTransformedPosition(
-        const Position& pos, int rotations, bool flip) const {
-        // Get board center for rotation reference
-        int centerRow = rows / 2;
-        int centerCol = cols / 2;
-        
-        // Adjust position to origin-centered coordinates
-        int x = pos.col - centerCol;
-        int y = pos.row - centerRow;
-        
-        // Apply flip if needed
-        if (flip) {
-            x = -x;
-        }
-        
-        // Apply rotation (0, 90, 180, or 270 degrees)
-        for (int r = 0; r < rotations; r++) {
-            // 90-degree rotation: (x,y) -> (-y,x)
-            int temp = x;
-            x = -y;
-            y = temp;
-        }
-        
-        // Convert back to board coordinates
-        return Position(y + centerRow, x + centerCol);
-    }
-    \end{verbatim}
-    
+    \item \textbf{Pattern Recognition}: Identifying board symmetries reduced the search space significantly. The recognition that rotating or flipping the board produces equivalent game states led to a major algorithmic improvement.
+   
     \item \textbf{Memoization}: Caching previously computed results avoided redundant calculations. The static cache of unsolvable board states dramatically improved performance:
-    
-    \begin{verbatim}
-    // Static cache to optimize board solving
-    static QSet<quint64> failedStates;
-    
-    bool BoardController::solveBoard(Board* board) {
-        // Check if we've already determined this board is unsolvable
-        quint64 boardId = board->getBoardStateId();
-        if (failedStates.contains(boardId)) {
-            return false;
-        }
-        
-        // Check symmetrical variants as well
-        QVector<quint64> allSymmetricIds = board->getAllSymmetricStateIds();
-        for (const quint64& id : allSymmetricIds) {
-            if (failedStates.contains(id)) {
-                return false;
-            }
-        }
-        
-        // Continue with solving algorithm...
-    }
-    \end{verbatim}
-    
-    \item \textbf{Pruning}: Early termination of search paths that couldn't lead to solutions reduced computation time
+
     \item \textbf{Bit Manipulation}: Using bit operations to create compact board state representations improved memory efficiency and comparison speed
 \end{itemize}
 
@@ -144,7 +91,7 @@ The Endgame mode required a novel approach to generating random but solvable puz
 
 \begin{itemize}
     \item Working backward from the winning state guaranteed solvability
-    \item Applying random "reverse moves" created diverse puzzle configurations
+    \item Applying random ``reverse moves" created diverse puzzle configurations
     \item This reverse-engineering approach ensured the generated puzzles were both challenging and fair
 \end{itemize}
 
@@ -156,27 +103,9 @@ Working with C++ reinforced key OOP concepts:
 
 \begin{itemize}
     \item \textbf{Encapsulation}: Properly hiding implementation details behind public interfaces improved maintainability. For example, the \texttt{Board} class encapsulates all board state management:
-    
-    \begin{verbatim}
-    class Board : public QObject {
-    private:
-        QVector<QVector<PegState>> grid;
-        int rows;
-        int cols;
-        int pegCount;
-        BoardType currentBoardType;
-        QVector<Move> moveHistory;
-        
-    public:
-        // Public interface methods
-        QVector<Move> getValidMoves() const;
-        bool performMove(const Move &move);
-        bool undoLastMove();
-        PegState getPegState(Position pos) const;
-        // ...
-    };
-    \end{verbatim}
-    
+    \begin{center}
+        \includegraphics[width=0.6\textwidth]{resource/code-examples/BoardDeclaration.png}
+    \end{center}
     \item \textbf{Inheritance}: Extending Qt classes allowed for customizing behavior while leveraging existing functionality
     \item \textbf{Polymorphism}: Using virtual functions and overriding methods like \texttt{paintEvent} in UI components
     \item \textbf{Composition}: Building complex objects from simpler ones, such as composing the game view from multiple UI elements
@@ -197,18 +126,7 @@ The project provided opportunities to utilize modern C++ features:
 Working with the Qt framework enhanced my understanding of:
 
 \begin{itemize}
-    \item \textbf{Signal-Slot Mechanism}: Implementing loosely coupled communication between components:
-    
-    \begin{verbatim}
-    // In constructor
-    connect(boardView, &BoardView::pegClicked, 
-            this, &BoardController::onPegCellClicked);
-    connect(this, &BoardController::highlightMovesSignal, 
-            boardView, &BoardView::highlightMoves);
-    connect(this, &BoardController::pegsRemainingChanged, 
-            boardView, &BoardView::updatePegCount);
-    \end{verbatim}
-    
+    \item \textbf{Signal-Slot Mechanism}: Implementing loosely coupled communication between components
     \item \textbf{Meta-Object System}: Leveraging Qt's reflection capabilities with the Q\_OBJECT macro
     \item \textbf{Event Handling}: Overriding event methods to handle mouse, keyboard, and paint events
     \item \textbf{Custom Painting}: Implementing custom drawing routines with QPainter for the board visualization
@@ -236,5 +154,3 @@ Writing performance-critical code provided insights into C++ optimization:
     \item Minimizing object creation and destruction in tight loops
     \item Profiling and identifying bottlenecks in the algorithm implementation
 \end{itemize}
-
-Overall, this project served as an excellent practical application of C++ programming concepts, reinforcing theoretical knowledge with hands-on experience in a complex, real-world application.
