@@ -1,8 +1,5 @@
 # Peg Solitaire Game
 
-[![Windows Release](https://github.com/yourusername/solitaire/actions/workflows/windows-release.yml/badge.svg)](https://github.com/yourusername/solitaire/actions/workflows/windows-release.yml)
-[![CI Build](https://github.com/yourusername/solitaire/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/solitaire/actions/workflows/ci.yml)
-
 A beautiful and modern Peg Solitaire game built with Qt6 and C++, featuring multiple game modes, intelligent strategy hints, and an intuitive user interface.
 
 ## 🎮 Features
