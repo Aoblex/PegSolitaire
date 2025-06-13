@@ -5,7 +5,42 @@
 A beautiful and modern Peg Solitaire game built with Qt6 and C++, featuring multiple game modes, intelligent strategy hints, and an intuitive user interface.
 
 ## 📁 File Structure Explanation
-TODO
+
+The project is under `src` folder, which is purely written in C++ and CMake.
+
+The report is written in $\LaTeX$ and the compiled report is located at `./report/main.pdf`.
+
+```
+src/                         # Source code directory
+├── controllers/             # Game logic and UI controllers
+│   ├── BoardController      # Manages game board logic and interactions
+│   ├── HomePageController   # Handles home page interactions
+│   ├── SettingsPageController # Manages settings functionality
+│   ├── StartPageController  # Controls game start/setup
+│   └── StrategyWorker       # AI strategy calculation worker
+├── models/                  # Data models
+│   ├── Board                # Game board state and logic
+│   └── BoardSetup           # Board initialization and configuration
+├── views/                   # UI components
+│   ├── BoardView            # Game board visualization
+│   ├── GameView             # Main game interface
+│   ├── HomePageView         # Home/welcome page
+│   ├── LoadingCircle        # Loading animation component
+│   ├── SettingsPageView     # Settings interface
+│   └── StartPageView        # Game setup/start menu
+├── utils/                   # Utility classes
+│   └── ButtonStyles         # Common button styling
+└── resources/               # Application resources
+    ├── icon.ico/.svg        # Application icons
+    └── resources.qrc        # Qt resource file
+
+build/                       # Build output directory
+demo/                        # Demo and screenshot assets
+report/                      # Project documentation
+├── content/                 # LaTeX report sections
+└── resource/                # Report resources and images
+prompts/                     # Development prompt history
+```
 
 ## 🎮 Features
 
