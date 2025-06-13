@@ -1,5 +1,7 @@
 # Peg Solitaire Game
 
+![English Board Demo](./demo/EnglishBoard.png)
+
 A beautiful and modern Peg Solitaire game built with Qt6 and C++, featuring multiple game modes, intelligent strategy hints, and an intuitive user interface.
 
 ## 🎮 Features
