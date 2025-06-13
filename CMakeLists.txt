@@ -46,11 +46,15 @@ set(PROJECT_SOURCES
         controllers/SettingsPageController.cpp
         controllers/SettingsPageController.h
         controllers/StrategyWorker.cpp
-        controllers/StrategyWorker.h
-        utils/ButtonStyles.cpp
+        controllers/StrategyWorker.h        utils/ButtonStyles.cpp
         utils/ButtonStyles.h
         resources/resources.qrc
 )
+
+# Add Windows resource file for executable icon
+if(WIN32)
+    set(PROJECT_SOURCES ${PROJECT_SOURCES} resources/app.rc)
+endif()
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(solitaire
